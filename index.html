@@ -1,0 +1,321 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Soma-workflow: A unified and simple interface to parallel computing resource &#8212; soma-workflow version 3.1 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    
+    <link rel="shortcut icon" href="_static/icon_small.ico"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Soma-workflow concepts" href="concepts.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="concepts.html" title="Soma-workflow concepts"
+             accesskey="N">next</a> |</li>
+        <li class="nav-item nav-item-0"><a href="#">soma-workflow version 3.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Soma-workflow: A unified and simple interface to parallel computing resource</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="soma-workflow-a-unified-and-simple-interface-to-parallel-computing-resource">
+<h1>Soma-workflow: A unified and simple interface to parallel computing resource<a class="headerlink" href="#soma-workflow-a-unified-and-simple-interface-to-parallel-computing-resource" title="Permalink to this headline">¶</a></h1>
+<p>Parallel computing resources are now highly available: multiple core machines,
+clusters or grids. Soma-workflow is a unified and simple interface to parallel
+computing resources which aims at making easier the use of parallel resources by
+non expert users and software.</p>
+<p>Soma-workflow is an open source Python application.</p>
+<blockquote>
+<div><div class="figure align-default" id="id2">
+<a class="reference internal image-reference" href="_images/gui_overview.png"><img alt="_images/gui_overview.png" src="_images/gui_overview.png" style="width: 396.0px; height: 319.5px;" /></a>
+<p class="caption"><span class="caption-text"><em>Overview of soma-workflow graphical user interface</em></span><a class="headerlink" href="#id2" title="Permalink to this image">¶</a></p>
+</div>
+</div></blockquote>
+</div>
+<div class="section" id="contents">
+<h1>Contents<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="#licence">Licence</a></p></li>
+<li><p><a class="reference internal" href="#download">Download</a></p></li>
+<li><p><a class="reference internal" href="#quick-start-on-a-multiple-core-machine">Quick start on a multiple core machine</a></p></li>
+<li><p><a class="reference internal" href="#main-features">Main Features</a></p></li>
+</ul>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="concepts.html">Soma-workflow concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changes_swf3.html">Important changes in Soma-Workflow 3</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gui.html">Graphical User Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MPI_workflow_runner.html">MPI workflow runner —<strong>beta</strong>—</a></li>
+<li class="toctree-l1"><a class="reference internal" href="errors_troubleshooting.html">Tips, Good Practices and Errors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="status_list.html">Status list</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workflow_creation.html">Workflow creation API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="client_API.html">Python API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scheduler.html">Supporting new computing resources: writing a Scheduler implementation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="install_config.html">Installation and configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+</ul>
+</div>
+<ul class="simple">
+<li><p><a class="reference internal" href="#new">New</a></p></li>
+<li><p><a class="reference internal" href="#communications">Communications</a></p></li>
+<li><p><a class="reference internal" href="#authors-and-contributors">Authors and contributors</a></p></li>
+</ul>
+</div>
+<div class="section" id="licence">
+<h1>Licence<a class="headerlink" href="#licence" title="Permalink to this headline">¶</a></h1>
+<blockquote>
+<div><p>Soma-Workflow is free software, and is distributed under the <a class="reference external" href="http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html">CeCILL-B</a> licence, which is similar to the BSD licence (with precisions for the french law).</p>
+</div></blockquote>
+</div>
+<div class="section" id="download">
+<h1>Download<a class="headerlink" href="#download" title="Permalink to this headline">¶</a></h1>
+<p><a class="reference external" href="http://pypi.python.org/pypi/soma-workflow">Soma-workflow on PyPI</a></p>
+</div>
+<div class="section" id="quick-start-on-a-multiple-core-machine">
+<h1>Quick start on a multiple core machine<a class="headerlink" href="#quick-start-on-a-multiple-core-machine" title="Permalink to this headline">¶</a></h1>
+<ul>
+<li><p>Requirements: Python 2.7 or more. For the GUI: Qt <em>version 4.6.2 or more</em>, <a class="reference external" href="http://www.riverbankcomputing.co.uk/software/pyqt/intro">PyQt</a> <em>version 4.7.2 or more</em>, or <a class="reference external" href="http://www.pyside.org">PySide</a> <em>version 1.1.1 or more</em> and optionally <a class="reference external" href="http://matplotlib.sourceforge.net/">matplotlib</a> <em>version 0.99 or more</em>.</p></li>
+<li><p>We recommend to install Soma-workflow in a local directory: no special rights required &amp; easy clean up at any time removing the local directory.</p>
+<ol class="arabic">
+<li><p>Create a local directory such as <em>~/.local/lib/python2.7/site-packages</em> and create the bin directory: <em>~/.local/bin</em></p></li>
+<li><p>Setup the environment variables with the commands:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ export PYTHONPATH=$HOME/.local/lib/python2.7/site-packages:$PYTHONPATH
+
+$ export PATH=$HOME/.local/bin:$PATH
+</pre></div>
+</div>
+</li>
+</ol>
+<blockquote>
+<div><p>You can copy these lines in your ~/.bashrc for an automatic setup of the variables at login.</p>
+</div></blockquote>
+</li>
+<li><p>Download the latest tarball from <a class="reference external" href="http://pypi.python.org/pypi/soma-workflow">PyPI</a> and expand it.</p></li>
+<li><p>Install Soma-workflow in the ~/.local directory:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ python setup.py install --user
+</pre></div>
+</div>
+<p>If you chose a different name for you local directory (ex: ~/mylocal) use instead the following command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ python setup.py install --prefix ~/mylocal
+</pre></div>
+</div>
+</li>
+<li><p>Run the GUI:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ soma_workflow_gui
+</pre></div>
+</div>
+</li>
+<li><p>Run the <a class="reference internal" href="examples.html"><span class="doc">documentation examples</span></a>.</p></li>
+</ul>
+</div>
+<div class="section" id="main-features">
+<h1>Main Features<a class="headerlink" href="#main-features" title="Permalink to this headline">¶</a></h1>
+<blockquote>
+<div><dl class="simple">
+<dt><strong>Unified interface to multiple computing resources:</strong></dt><dd><p>Submission of jobs or workflows with an unique interface to various
+parallel resources: multiple core machines or clusters which can be
+managed by various systems (such as Grid Engine, Condor, Torque/PBS, LSF..)</p>
+</dd>
+</dl>
+<dl>
+<dt><strong>Workflow management:</strong></dt><dd><p>Soma-workflow provides the possibility to submit a set of tasks (called jobs)
+with execution dependencies without dealing with individual task submission.</p>
+<div class="figure align-default" id="id3">
+<a class="reference internal image-reference" href="_images/workflow_example.png"><img alt="_images/workflow_example.png" src="_images/workflow_example.png" style="width: 500.0px; height: 164.0px;" /></a>
+<p class="caption"><span class="caption-text"><em>Workflow example</em></span><a class="headerlink" href="#id3" title="Permalink to this image">¶</a></p>
+</div>
+</dd>
+<dt><strong>Python API and Graphical User Interface:</strong></dt><dd><p>The Python API was designed to be easily used by non expert user, but also
+complete to meet external software needs: submission, control and monitoring
+of jobs and workflows. The GUI provides an easy and quick way of monitoring
+workflows on various computing resources. The workflows can also be
+submitted and controlled using the GUI.</p>
+<div class="figure align-default" id="id4">
+<a class="reference internal image-reference" href="_images/API_overview.png"><img alt="_images/API_overview.png" src="_images/API_overview.png" style="width: 509.5px; height: 246.5px;" /></a>
+<p class="caption"><span class="caption-text"><em>Overview of Soma-workflow python API</em></span><a class="headerlink" href="#id4" title="Permalink to this image">¶</a></p>
+</div>
+<div class="figure align-default" id="id5">
+<a class="reference internal image-reference" href="_images/gui_overview.png"><img alt="_images/gui_overview.png" src="_images/gui_overview.png" style="width: 396.0px; height: 319.5px;" /></a>
+<p class="caption"><span class="caption-text"><em>Overview of Soma-workflow graphical interface</em></span><a class="headerlink" href="#id5" title="Permalink to this image">¶</a></p>
+</div>
+</dd>
+<dt><strong>Quick start on multiple core machines:</strong></dt><dd><p>Soma-workflow is directly operational on any multiple core machine.</p>
+</dd>
+<dt><strong>Transparent remote access to computing resources:</strong></dt><dd><p>When the computing resource is remote, Soma-workflow can be used as a
+client-server application. The communication with a remote computing
+resource is done transparently for the user through a ssh port forwarding
+tunnel. The client/server architecture enables the user to close the client
+application at any time. The workflows and jobs execution are not stopped.
+The user can open a client at any time to check the status of his
+work.</p>
+</dd>
+<dt><strong>File transfer and file path mapping tools:</strong></dt><dd><p>If the user’s machine and the remote computing resource do not have a shared
+file system, Soma-workflow provides tools to handle file transfers and/or
+path name matchings.</p>
+</dd>
+</dl>
+</div></blockquote>
+</div>
+<div class="section" id="new">
+<h1>New<a class="headerlink" href="#new" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="in-version-3-1">
+<h2>In version 3.1:<a class="headerlink" href="#in-version-3-1" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>The client/server communication architecture (based on ZMQ) has been revised to avoid some stability and timeout problems.</p></li>
+<li><p>Dynamic parameters in workflows: jobs can now have “named parameters” and outputs produced by a job (number, string, filename) are passed to downstream jobs. While passing values from a job output to another job input, custom link functions can be called to transform values, enabling applications such as map/reduce, cross-validation or leave-one-out in a semi-dynamic way.</p></li>
+</ul>
+</div>
+<div class="section" id="in-version-3-0">
+<h2>In version 3.0:<a class="headerlink" href="#in-version-3-0" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>Pyro is gone, Soma-Workflow is now using <a class="reference external" href="http://zeromq.org/">ZMQ</a> and <a class="reference external" href="https://pyzmq.readthedocs.io/en/latest/">PyZmq</a>.</p>
+<p>As a consequence, all the client/server communication layer has been made completely incompatible with soma-workflow 2.9 and earlier. Client and server should always be the same version anyway. The client/server API has not changed fundamentally however.</p>
+</li>
+<li><p>Porting to Python3: Pyro3 having been dropped, all the requirements for porting to Python3 have now been met, and Soma-Workflow can entirely wotk using Python3. However it is not possible to run different versions of Python on the client and the server: read <a class="reference internal" href="changes_swf3.html"><span class="doc">Important changes in Soma-Workflow 3</span></a> for details.</p></li>
+<li><p>New PBSPro scheduler type, to be used when DRMAA is not available, or doesn’t work (like on our new cluster): use <code class="docutils literal notranslate"><span class="pre">scheduler_type</span> <span class="pre">=</span> <span class="pre">pbspro</span></code> in the server config file. It might also work on PBS/Torque, we have not tried yet.</p></li>
+<li><p>It is now possible to restart a workflow which is still running: running / pending jobs will go on, and only failed jobs will be restarted.</p></li>
+<li><p>A few improvements, such as the 2 new plots modes in the GUI (soma_workflow_gui) displaying the use of CPUs in addition to jobs (useful for parallel jobs)</p></li>
+</ul>
+<p>See <a class="reference internal" href="changelog.html"><span class="doc">the full changelog</span></a></p>
+</div>
+</div>
+<div class="section" id="communications">
+<h1>Communications<a class="headerlink" href="#communications" title="Permalink to this headline">¶</a></h1>
+<dl class="simple">
+<dt><strong>Communications:</strong></dt><dd><ul class="simple">
+<li><p>MICCAI 2011 workshop High Performance and Distributed Computing for Medical Imaging, September 22nd 2011, Toronto: <a class="reference external" href="http://static.brainvisa.info/soma-workflow/MICCAI_2011_soma_workflow.pdf">paper</a>, <a class="reference external" href="http://static.brainvisa.info/soma-workflow/poster_MICCAI_2011_soma_workflow.pdf">poster</a></p></li>
+<li><p>Python in Neuroscience workshop satellite to Euroscipy, August 29-30 2011, Paris: <a class="reference external" href="http://static.brainvisa.info/soma-workflow/pythonneuro_2011_soma_workflow.pdf">abstract</a>, <a class="reference external" href="http://static.brainvisa.info/soma-workflow/presentation_pythonneuro_2011_soma_workflow.pdf">presentation</a></p></li>
+<li><p>HBM Annual Meeting 2011, Quebec: <a class="reference external" href="http://static.brainvisa.info/soma-workflow/poster_HBM_2011_somaworkflow.pdf">poster</a></p></li>
+</ul>
+</dd>
+<dt><strong>They use Soma-workflow:</strong></dt><dd><ul class="simple">
+<li><p><a class="reference external" href="http://hal.inria.fr/hal-00720265">A fast computational framework for genome-wide association studies with neuroimaging data</a>  by Benoit Da Mota et al.</p></li>
+<li><p><a class="reference external" href="http://pyhrf.org">PyHRF</a></p></li>
+<li><p><a class="reference external" href="http://brainvisa.info">BrainVISA</a></p></li>
+</ul>
+</dd>
+</dl>
+</div>
+<div class="section" id="authors-and-contributors">
+<h1>Authors and contributors<a class="headerlink" href="#authors-and-contributors" title="Permalink to this headline">¶</a></h1>
+<blockquote>
+<div><p>Yann Cointepas¹²</p>
+<p>Benoit Da Mota³ - Major contributor of the MPI scheduler</p>
+<p>Isabelle Denghien Courcol⁴</p>
+<p>Clara Fischer²</p>
+<p>Dominique Geffroy⁴</p>
+<p>Soizic Laguitton² - Main developper (Jan 2010 to March 2013)</p>
+<p>Jinpeng Li¹</p>
+<p>Denis Rivière¹</p>
+<p>Nicolas Souedet⁵</p>
+<p>Thomas Vincent¹⁶</p>
+<p>¹ CEA, Neurospin, Gif-sur-Yvette, France |
+² CATI, France |
+³ PARIETAL, INRIA, Saclay, France |
+⁴ INSERM, Neurospin, Gif-sur-Yvette, France |
+⁵ CEA, MIRCEN, Fontenay-aux-roses, France |
+⁶ INRIA, MISTIS, Grenoble, France</p>
+</div></blockquote>
+<ul class="simple">
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="#">
+              <img class="logo" src="_static/logo_white_small.png" alt="Logo"/>
+            </a></p>
+  <h3><a href="#">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Soma-workflow: A unified and simple interface to parallel computing resource</a></li>
+<li><a class="reference internal" href="#contents">Contents</a></li>
+<li><a class="reference internal" href="#licence">Licence</a></li>
+<li><a class="reference internal" href="#download">Download</a></li>
+<li><a class="reference internal" href="#quick-start-on-a-multiple-core-machine">Quick start on a multiple core machine</a></li>
+<li><a class="reference internal" href="#main-features">Main Features</a></li>
+<li><a class="reference internal" href="#new">New</a><ul>
+<li><a class="reference internal" href="#in-version-3-1">In version 3.1:</a></li>
+<li><a class="reference internal" href="#in-version-3-0">In version 3.0:</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#communications">Communications</a></li>
+<li><a class="reference internal" href="#authors-and-contributors">Authors and contributors</a></li>
+</ul>
+
+  <h4>Next topic</h4>
+  <p class="topless"><a href="concepts.html"
+                        title="next chapter">Soma-workflow concepts</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/index.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="concepts.html" title="Soma-workflow concepts"
+             >next</a> |</li>
+        <li class="nav-item nav-item-0"><a href="#">soma-workflow version 3.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Soma-workflow: A unified and simple interface to parallel computing resource</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2011-2021 CEA, Neurospin, France, CATI, France.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

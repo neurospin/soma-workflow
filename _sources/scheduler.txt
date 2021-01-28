@@ -1,0 +1,71 @@
+
+Supporting new computing resources: writing a Scheduler implementation
+======================================================================
+
+In Soma-Workflow the link between the workflow and jobs API and the computing resource jobs manager is handled through :class:`Scheduler <scheduler.Scheduler>` subclasses implementations. There are already several in Soma-Workflow: a local scheduler to run on a standard computer (:class:`LocalScheduler <soma_workflow.schedulers.local_scheduler.LocalScheduler>`), a DRMAA implementation which can use several types of DRMS (cluster managers) (:class:`DrmaaScheduler <soma_workflow.schedulers.drmaa_scheduler.DrmaaScheduler>`), the MPI scheduler (:class:`MPIScheduler <soma_workflow.schedulers.mpi_scheduler.MPIScheduler>`), and now also a PBS Pro scheduler (since DRMAA does not work any longer with it) (:class:`PBSProScheduler <soma_workflow.schedulers.pbspro_scheduler.PBSProScheduler>`).
+
+In case the computing resource you are using is not supported by the existing implementations, it is possible and relatively easy to write a new :class:`Scheduler` implementation to handle a new type of cluster typically. It is a matter of writing a :class:`Scheduler` subclass which implements the different methods, mainly 4 methods have to be defined (job_submission, get_job_status, get_job_exit_info, kill_job), plus the build_scheduler class method which just instantiates an instance of the derived class with appropriate parameters.
+
+A good and easy example to look at is the :class:`PBSProScheduler <soma_workflow.schedulers.pbspro_scheduler.PBSProScheduler>` implementation which merely runs DRMS commands (``qsub``, ``qstat``) and does not use complex C/python bindings. This implementation has been written in a few hours, so it is not a huge work.
+
+
+Scheduler definition
+--------------------
+
+This is the generic, abstract API.
+
+.. automodule:: scheduler
+    :members:
+
+
+.. _pbspro:
+
+PBS Pro implementation
+----------------------
+
+The PBS Pro scheduler is not using the DRMAA library, we had to design it because the DRMAA implementation was not working any longer on our cluster. This implementation is a very simple (and probably sub-optimal) wrapping around PBS commandlines (``qsub``, ``qstat``, ``qdel``). It should also reasonably work using Torque/PBS 2.5 but has not been extensively tested this way (since DRMAA works for it).
+
+To use the PBS Pro scheduler, specify in the server config file:
+
+.. code-block:: ini
+
+    scheduler_type = pbspro
+
+.. automodule:: soma_workflow.schedulers.pbspro_scheduler
+    :members:
+
+
+Local implementation
+--------------------
+
+To use the local scheduler, specify in the server config file:
+
+.. code-block:: ini
+
+    scheduler_type = local_basic
+
+.. automodule:: soma_workflow.schedulers.local_scheduler
+    :members:
+
+
+DRMAA implementation
+--------------------
+
+To use the DRMAA scheduler, specify in the server config file (this is the default on a server actually so it is not mandatory to specify it):
+
+.. code-block:: ini
+
+    scheduler_type = drmaa
+
+Note that the DRMAA implementation only supports the DRMAA1 API, not DRMAA2. A work has been started to build a DRMAA2 implementation, but has been stopped because we did not find a working DRMAA2 C implementation for our PBSPro cluster.
+
+.. automodule:: soma_workflow.schedulers.drmaa_scheduler
+    :members:
+
+
+MPI implementation
+------------------
+
+.. automodule:: soma_workflow.schedulers.mpi_scheduler
+    :members:
+

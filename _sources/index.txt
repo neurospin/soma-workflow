@@ -1,0 +1,269 @@
+.. soma-workflow documentation master file, created by
+   sphinx-quickstart on Fri Jan 28 10:45:12 2011.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
+
+
+
+
+Soma-workflow: A unified and simple interface to parallel computing resource
+=============================================================================
+
+Parallel computing resources are now highly available: multiple core machines,
+clusters or grids. Soma-workflow is a unified and simple interface to parallel
+computing resources which aims at making easier the use of parallel resources by
+non expert users and software.
+
+Soma-workflow is an open source Python application.
+
+  .. figure:: images/gui_overview.*
+      :scale: 50
+
+      *Overview of soma-workflow graphical user interface*
+
+Contents
+========
+
+* `Licence`_
+* `Download`_
+* `Quick start on a multiple core machine`_
+* `Main Features`_
+
+.. toctree::
+   :maxdepth: 1
+
+   concepts.txt
+   changes_swf3.txt
+   gui.txt
+   examples.txt
+   MPI_workflow_runner.txt
+   errors_troubleshooting.txt
+   status_list.txt
+   workflow_creation.txt
+   client_API.txt
+   scheduler.txt
+   install_config.txt
+   changelog.txt
+
+* `New`_
+* `Communications`_
+* `Authors and contributors`_
+
+
+Licence
+=======
+
+  Soma-Workflow is free software, and is distributed under the `CeCILL-B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_ licence, which is similar to the BSD licence (with precisions for the french law).
+
+
+Download
+========
+
+`Soma-workflow on PyPI <http://pypi.python.org/pypi/soma-workflow>`_
+
+
+Quick start on a multiple core machine
+======================================
+
+* Requirements: Python 2.7 or more. For the GUI: Qt *version 4.6.2 or more*, `PyQt <http://www.riverbankcomputing.co.uk/software/pyqt/intro>`_ *version 4.7.2 or more*, or `PySide <http://www.pyside.org>`_ *version 1.1.1 or more* and optionally `matplotlib <http://matplotlib.sourceforge.net/>`_ *version 0.99 or more*.
+
+* We recommend to install Soma-workflow in a local directory: no special rights required & easy clean up at any time removing the local directory.
+
+  1. Create a local directory such as *~/.local/lib/python2.7/site-packages* and create the bin directory: *~/.local/bin*
+
+  2. Setup the environment variables with the commands::
+
+      $ export PYTHONPATH=$HOME/.local/lib/python2.7/site-packages:$PYTHONPATH
+
+      $ export PATH=$HOME/.local/bin:$PATH
+
+    You can copy these lines in your ~/.bashrc for an automatic setup of the variables at login.
+
+* Download the latest tarball from `PyPI <http://pypi.python.org/pypi/soma-workflow>`_ and expand it.
+
+* Install Soma-workflow in the ~/.local directory::
+
+    $ python setup.py install --user
+
+  If you chose a different name for you local directory (ex: ~/mylocal) use instead the following command::
+
+    $ python setup.py install --prefix ~/mylocal
+
+
+* Run the GUI::
+
+    $ soma_workflow_gui
+
+* Run the :doc:`documentation examples <examples>`.
+
+
+Main Features
+=============
+
+  **Unified interface to multiple computing resources:** 
+    Submission of jobs or workflows with an unique interface to various 
+    parallel resources: multiple core machines or clusters which can be 
+    managed by various systems (such as Grid Engine, Condor, Torque/PBS, LSF..)
+
+  ..
+    .. image:: images/soma_workflow_general.*
+      :scale: 40
+
+
+  **Workflow management:**
+    Soma-workflow provides the possibility to submit a set of tasks (called jobs) 
+    with execution dependencies without dealing with individual task submission.
+
+
+    .. figure:: images/workflow_example.*
+      :scale: 50
+    
+      *Workflow example*
+
+  **Python API and Graphical User Interface:**
+    The Python API was designed to be easily used by non expert user, but also
+    complete to meet external software needs: submission, control and monitoring 
+    of jobs and workflows. The GUI provides an easy and quick way of monitoring 
+    workflows on various computing resources. The workflows can also be 
+    submitted and controlled using the GUI.
+
+    .. figure:: images/API_overview.*
+      :scale: 50 
+
+      *Overview of Soma-workflow python API*
+
+    .. figure:: images/gui_overview.*
+      :scale: 50 
+
+      *Overview of Soma-workflow graphical interface*
+    
+
+  **Quick start on multiple core machines:**
+    Soma-workflow is directly operational on any multiple core machine. 
+    
+  **Transparent remote access to computing resources:** 
+    When the computing resource is remote, Soma-workflow can be used as a   
+    client-server application. The communication with a remote computing 
+    resource is done transparently for the user through a ssh port forwarding 
+    tunnel. The client/server architecture enables the user to close the client 
+    application at any time. The workflows and jobs execution are not stopped. 
+    The user can open a client at any time to check the status of his 
+    work.
+
+  **File transfer and file path mapping tools:** 
+    If the user's machine and the remote computing resource do not have a shared 
+    file system, Soma-workflow provides tools to handle file transfers and/or 
+    path name matchings.
+
+
+New
+===
+
+In version 3.1:
+---------------
+
+* The client/server communication architecture (based on ZMQ) has been revised to avoid some stability and timeout problems.
+
+* Dynamic parameters in workflows: jobs can now have "named parameters" and outputs produced by a job (number, string, filename) are passed to downstream jobs. While passing values from a job output to another job input, custom link functions can be called to transform values, enabling applications such as map/reduce, cross-validation or leave-one-out in a semi-dynamic way.
+
+
+In version 3.0:
+---------------
+
+* Pyro is gone, Soma-Workflow is now using `ZMQ <http://zeromq.org/>`_ and `PyZmq <https://pyzmq.readthedocs.io/en/latest/>`_.
+
+  As a consequence, all the client/server communication layer has been made completely incompatible with soma-workflow 2.9 and earlier. Client and server should always be the same version anyway. The client/server API has not changed fundamentally however.
+
+* Porting to Python3: Pyro3 having been dropped, all the requirements for porting to Python3 have now been met, and Soma-Workflow can entirely wotk using Python3. However it is not possible to run different versions of Python on the client and the server: read :doc:`changes_swf3` for details.
+
+* New PBSPro scheduler type, to be used when DRMAA is not available, or doesn't work (like on our new cluster): use ``scheduler_type = pbspro`` in the server config file. It might also work on PBS/Torque, we have not tried yet.
+
+* It is now possible to restart a workflow which is still running: running / pending jobs will go on, and only failed jobs will be restarted.
+
+* A few improvements, such as the 2 new plots modes in the GUI (soma_workflow_gui) displaying the use of CPUs in addition to jobs (useful for parallel jobs)
+
+
+See :doc:`the full changelog <changelog>`
+
+
+Communications
+==============
+
+**Communications:**
+  * MICCAI 2011 workshop High Performance and Distributed Computing for Medical Imaging, September 22nd 2011, Toronto: `paper <http://static.brainvisa.info/soma-workflow/MICCAI_2011_soma_workflow.pdf>`_, `poster <http://static.brainvisa.info/soma-workflow/poster_MICCAI_2011_soma_workflow.pdf>`_
+  * Python in Neuroscience workshop satellite to Euroscipy, August 29-30 2011, Paris: `abstract <http://static.brainvisa.info/soma-workflow/pythonneuro_2011_soma_workflow.pdf>`_, `presentation <http://static.brainvisa.info/soma-workflow/presentation_pythonneuro_2011_soma_workflow.pdf>`_
+  * HBM Annual Meeting 2011, Quebec: `poster <http://static.brainvisa.info/soma-workflow/poster_HBM_2011_somaworkflow.pdf>`_
+
+**They use Soma-workflow:**
+  * `A fast computational framework for genome-wide association studies with neuroimaging data <http://hal.inria.fr/hal-00720265>`_  by Benoit Da Mota et al.
+  * `PyHRF <http://pyhrf.org>`_
+  * `BrainVISA <http://brainvisa.info>`_
+
+
+Authors and contributors
+========================
+
+  Yann Cointepas¹²
+
+  Benoit Da Mota³ - Major contributor of the MPI scheduler
+
+  Isabelle Denghien Courcol⁴
+
+  Clara Fischer²
+
+  Dominique Geffroy⁴
+
+  Soizic Laguitton² - Main developper (Jan 2010 to March 2013)
+
+  Jinpeng Li¹
+
+  Denis Rivière¹
+
+  Nicolas Souedet⁵
+
+  Thomas Vincent¹⁶
+
+
+  ¹ CEA, Neurospin, Gif-sur-Yvette, France |
+  ² CATI, France |
+  ³ PARIETAL, INRIA, Saclay, France |
+  ⁴ INSERM, Neurospin, Gif-sur-Yvette, France |
+  ⁵ CEA, MIRCEN, Fontenay-aux-roses, France |
+  ⁶ INRIA, MISTIS, Grenoble, France
+
+..
+  .. image:: images/CEA_logo_quadri-sur-fond-rouge.png
+      :scale: 17
+
+  .. image:: images/logos_neurospin.bmp
+      :scale: 40
+
+  .. image:: images/logo_cati_couleur_100.png
+      :scale: 30
+
+  .. image:: images/itea2.gif
+      :scale: 70
+
+  .. image:: images/hipip.jpg
+      :scale: 20
+
+  .. image:: images/ifr_bigcolor.jpg
+      :scale: 40
+
+
+..
+  light_mode_config.txt
+  client_install_config.txt
+  server_install_config.txt
+  * :ref:`genindex`
+  * :ref:`modindex`
+
+* :ref:`search`
+
+
+..
+  :Release: |release|
+  :Date: |today|
+
+
+

@@ -1,0 +1,143 @@
+.. _client_api:
+
+==========
+Python API
+==========
+
+The submission, monitoring and control of Workflow, Job and FileTransfer can be 
+done through the client.WorkflowController interface.
+
+This page presents the documentation of the client.WorkflowController class.
+
+.. autoclass:: client.WorkflowController(object)
+
+.. contents:: WorkflowController API
+   :local:
+
+   
+
+Setup the connection with the computing resource
+================================================
+
+.. currentmodule:: client
+
+.. automethod:: WorkflowController.__init__
+
+
+Submission / Registration
+=========================
+
+.. currentmodule:: client
+
+.. automethod:: WorkflowController.submit_workflow
+
+.. automethod:: WorkflowController.register_transfer
+
+
+User's Workflows, Jobs, and FileTransfers retrieval
+===================================================
+
+.. currentmodule:: client
+
+.. automethod:: WorkflowController.workflow
+
+.. automethod:: WorkflowController.workflows
+
+.. automethod:: WorkflowController.jobs
+
+.. automethod:: WorkflowController.transfers
+
+
+Monitoring
+==========
+
+Workflows
+---------
+
+.. currentmodule:: client
+
+.. automethod:: WorkflowController.workflow_status
+
+.. automethod:: WorkflowController.workflow_elements_status
+
+
+Jobs
+----
+
+.. currentmodule:: client
+
+.. automethod:: WorkflowController.job_status
+
+.. automethod:: WorkflowController.job_termination_status
+
+.. automethod:: WorkflowController.retrieve_job_stdouterr
+
+
+File Transfers
+--------------
+
+.. currentmodule:: client
+
+.. automethod:: WorkflowController.transfer_status
+
+
+Control
+=======
+
+Workflows
+---------
+
+.. currentmodule:: client
+
+.. automethod:: WorkflowController.stop_workflow
+
+.. automethod:: WorkflowController.restart_workflow
+
+.. automethod:: WorkflowController.delete_workflow
+
+.. automethod:: WorkflowController.change_workflow_expiration_date
+
+.. automethod:: WorkflowController.wait_workflow
+
+
+Jobs
+----
+
+.. currentmodule:: client
+
+.. automethod:: WorkflowController.wait_job
+
+.. automethod:: WorkflowController.restart_jobs
+
+
+File Transfers
+--------------
+
+.. currentmodule:: client
+
+.. automethod:: WorkflowController.transfer_files
+
+.. automethod:: WorkflowController.delete_transfer
+
+
+Helper
+======
+
+.. currentmodule:: client
+
+.. automethod:: Helper.list_failed_jobs
+
+.. automethod:: Helper.delete_all_workflows
+
+.. automethod:: Helper.wait_workflow
+
+.. automethod:: Helper.transfer_input_files
+
+.. automethod:: Helper.transfer_output_files
+
+.. automethod:: Helper.serialize
+
+.. automethod:: Helper.unserialize
+
+.. automethod:: Helper.convert_wf_file_for_p2_5
+

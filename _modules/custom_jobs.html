@@ -1,0 +1,441 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>custom_jobs &#8212; soma-workflow version 3.1 documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="shortcut icon" href="../_static/icon_small.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">soma-workflow version 3.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">custom_jobs</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for custom_jobs</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">Small library of custom :class:`~client_types.EngineExecutionJob` subclasses.</span>
+
+<span class="sd">Provides jobs for map/reduce patterns, cross-validation folding, and lists manipulations.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span>
+<span class="kn">from</span> <span class="nn">soma_workflow.client_types</span> <span class="kn">import</span> <span class="n">Job</span><span class="p">,</span> <span class="n">EngineExecutionJob</span><span class="p">,</span> <span class="n">BarrierJob</span>
+<span class="kn">from</span> <span class="nn">six.moves</span> <span class="kn">import</span> <span class="nb">range</span>
+<span class="kn">from</span> <span class="nn">six.moves</span> <span class="kn">import</span> <span class="nb">zip</span>
+
+
+<div class="viewcode-block" id="MapJob"><a class="viewcode-back" href="../workflow_creation.html#custom_jobs.MapJob">[docs]</a><span class="k">class</span> <span class="nc">MapJob</span><span class="p">(</span><span class="n">EngineExecutionJob</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Map job: converts lists into series of single items. Typically an input</span>
+<span class="sd">    named ``inputs`` is a list of items. The job will separate items and</span>
+<span class="sd">    output each of them as an output parameter. The i-th item will be output as</span>
+<span class="sd">    ``output_&lt;i&gt;`` by default.</span>
+<span class="sd">    The inputs / outputs names can be customized using the named parameters</span>
+<span class="sd">    ``input_names`` and ``output_names``. Several lists can be split in the</span>
+<span class="sd">    same job.</span>
+<span class="sd">    The job will also output a ``lengths`` parameter which will contain the</span>
+<span class="sd">    input lists lengths. This lengths can typically be input in reduce jobs to</span>
+<span class="sd">    perform the reverse operation (see :class:`ReduceJob`).</span>
+
+<span class="sd">    * ``input_names`` is a list of input parameters names, each being a list to</span>
+<span class="sd">    be split. The default is ``[&#39;inputs&#39;]``</span>
+<span class="sd">    * ``output_names`` is a list of patterns used to build output parameters</span>
+<span class="sd">    names. Each item is a string containing a substitution pattern ``&quot;%d&quot;``</span>
+<span class="sd">    which will be replaced with a number. The default is ``[&#39;output_%d&#39;]``.</span>
+<span class="sd">    Each pattern will be used to replace items from the corresponding input in</span>
+<span class="sd">    the same order. Thus ``input_names``  and ``output_names`` should be the</span>
+<span class="sd">    same length.</span>
+<span class="sd">    * all other parameters given in ``param_dict`` are passed to the output</span>
+<span class="sd">    dictionary of the job, so that the job acts as a</span>
+<span class="sd">    :class:`~soma_workflow.client_types.BarrierJob` for parameters which are</span>
+<span class="sd">    not &quot;mapped&quot;.</span>
+
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">command</span><span class="o">=</span><span class="p">[],</span>
+                 <span class="n">referenced_input_files</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">referenced_output_files</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">name</span><span class="o">=</span><span class="s1">&#39;map&#39;</span><span class="p">,</span>
+                 <span class="n">param_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">param_dict</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">param_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="s1">&#39;input_names&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">param_dict</span><span class="p">:</span>
+            <span class="n">param_dict</span><span class="p">[</span><span class="s1">&#39;input_names&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;inputs&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="s1">&#39;output_names&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">param_dict</span><span class="p">:</span>
+            <span class="n">param_dict</span><span class="p">[</span><span class="s1">&#39;output_names&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;output_</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">inp</span> <span class="ow">in</span> <span class="n">param_dict</span><span class="p">[</span><span class="s1">&#39;input_names&#39;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">inp</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">param_dict</span><span class="p">:</span>
+                <span class="n">param_dict</span><span class="p">[</span><span class="n">inp</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">MapJob</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">command</span><span class="o">=</span><span class="p">[],</span>
+            <span class="n">referenced_input_files</span><span class="o">=</span><span class="n">referenced_input_files</span><span class="p">,</span>
+            <span class="n">referenced_output_files</span><span class="o">=</span><span class="n">referenced_output_files</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">param_dict</span><span class="o">=</span><span class="n">param_dict</span><span class="p">,</span>
+            <span class="n">has_outputs</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">engine_execution</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="bp">self</span><span class="p">):</span>
+        <span class="n">input_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;input_names&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;inputs&#39;</span><span class="p">])</span>
+        <span class="n">output_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;output_names&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;output_</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">])</span>
+        <span class="n">out_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">param_dict</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;input_names&#39;</span><span class="p">,</span> <span class="s1">&#39;output_names&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">input_names</span> \
+                <span class="o">+</span> <span class="n">output_names</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">out_dict</span><span class="p">:</span>
+                <span class="k">del</span> <span class="n">out_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+        <span class="n">lengths</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">inp</span><span class="p">,</span> <span class="n">out</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">input_names</span><span class="p">,</span> <span class="n">output_names</span><span class="p">):</span>
+            <span class="n">inputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_dict</span><span class="p">[</span><span class="n">inp</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">inputs</span><span class="p">):</span>
+                <span class="n">out_dict</span><span class="p">[</span><span class="n">out</span> <span class="o">%</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">item</span>
+            <span class="n">lengths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">inputs</span><span class="p">))</span>
+        <span class="n">out_dict</span><span class="p">[</span><span class="s1">&#39;lengths&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lengths</span>
+        <span class="k">return</span> <span class="n">out_dict</span></div>
+
+
+<div class="viewcode-block" id="ReduceJob"><a class="viewcode-back" href="../workflow_creation.html#custom_jobs.ReduceJob">[docs]</a><span class="k">class</span> <span class="nc">ReduceJob</span><span class="p">(</span><span class="n">EngineExecutionJob</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Reduce job: converts series of inputs into lists. Typically a series of</span>
+<span class="sd">    inputs named ``input_0`` .. ``input_&lt;n&gt;`` will be output as a single list</span>
+<span class="sd">    named ``outputs``.</span>
+
+<span class="sd">    Several input series can be handled by the job, and input names can be</span>
+<span class="sd">    customized.</span>
+
+<span class="sd">    * The numbers of inputs for each series is given as the ``lengths`` input</span>
+<span class="sd">    parameter. It is typically linked from the output of a :class:`MapJob`.</span>
+<span class="sd">    * Input parameters names patterns are given as the ``input_names``</span>
+<span class="sd">    parameter. It is a list of patterns, each containing a ``%d``pattern for</span>
+<span class="sd">    the input number. The defaut value is ``[&#39;input_%d&#39;]``.</span>
+<span class="sd">    * Output parameters names are given as the ``output_names`` parameter. The</span>
+<span class="sd">    default is ``[&#39;outputs&#39;]``.</span>
+<span class="sd">    * all other parameters given in ``param_dict`` are passed to the output</span>
+<span class="sd">    dictionary of the job, so that the job acts as a</span>
+<span class="sd">    :class:`~soma_workflow.client_types.BarrierJob` for parameters which are</span>
+<span class="sd">    not &quot;reduced&quot;.</span>
+
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">command</span><span class="o">=</span><span class="p">[],</span>
+                 <span class="n">referenced_input_files</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">referenced_output_files</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">name</span><span class="o">=</span><span class="s1">&#39;reduce&#39;</span><span class="p">,</span>
+                 <span class="n">param_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">param_dict</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">param_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="s1">&#39;input_names&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">param_dict</span><span class="p">:</span>
+            <span class="n">param_dict</span><span class="p">[</span><span class="s1">&#39;input_names&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;input_</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="s1">&#39;output_names&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">param_dict</span><span class="p">:</span>
+            <span class="n">param_dict</span><span class="p">[</span><span class="s1">&#39;output_names&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;outputs&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="s1">&#39;lengths&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">param_dict</span><span class="p">:</span>
+            <span class="n">param_dict</span><span class="p">[</span><span class="s1">&#39;lengths&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ReduceJob</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">command</span><span class="o">=</span><span class="p">[],</span>
+            <span class="n">referenced_input_files</span><span class="o">=</span><span class="n">referenced_input_files</span><span class="p">,</span>
+            <span class="n">referenced_output_files</span><span class="o">=</span><span class="n">referenced_output_files</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">param_dict</span><span class="o">=</span><span class="n">param_dict</span><span class="p">,</span>
+            <span class="n">has_outputs</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resize_inputs</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">resize_inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">param</span><span class="p">,</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">param_dict</span><span class="p">[</span><span class="s1">&#39;input_names&#39;</span><span class="p">],</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">param_dict</span><span class="p">[</span><span class="s1">&#39;lengths&#39;</span><span class="p">]):</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">l</span><span class="p">):</span>
+                <span class="n">p</span> <span class="o">=</span> <span class="n">param</span> <span class="o">%</span> <span class="n">i</span>
+                <span class="k">if</span> <span class="n">p</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_dict</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">param_dict</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="n">l</span>
+            <span class="k">while</span> <span class="n">param</span> <span class="o">%</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_dict</span><span class="p">:</span>
+                <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_dict</span><span class="p">[</span><span class="n">param</span> <span class="o">%</span> <span class="n">i</span><span class="p">]</span>
+                <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">engine_execution</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="bp">self</span><span class="p">):</span>
+        <span class="n">input_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;input_names&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;input_</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">])</span>
+        <span class="n">output_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;output_names&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;outputs&#39;</span><span class="p">])</span>
+        <span class="n">lengths</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_dict</span><span class="p">[</span><span class="s1">&#39;lengths&#39;</span><span class="p">]</span>
+        <span class="n">out_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">param_dict</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;input_names&#39;</span><span class="p">,</span> <span class="s1">&#39;output_names&#39;</span><span class="p">,</span> <span class="s1">&#39;lengths&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">input_names</span> \
+                <span class="o">+</span> <span class="n">output_names</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">out_dict</span><span class="p">:</span>
+                <span class="k">del</span> <span class="n">out_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">inp</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="n">length</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">input_names</span><span class="p">,</span> <span class="n">output_names</span><span class="p">,</span> <span class="n">lengths</span><span class="p">):</span>
+            <span class="n">out_list</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">param_dict</span><span class="p">[</span><span class="n">inp</span> <span class="o">%</span> <span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">length</span><span class="p">)]</span>
+            <span class="n">out_dict</span><span class="p">[</span><span class="n">out</span><span class="p">]</span> <span class="o">=</span> <span class="n">out_list</span>
+        <span class="k">return</span> <span class="n">out_dict</span></div>
+
+
+<div class="viewcode-block" id="LeaveOneOutJob"><a class="viewcode-back" href="../workflow_creation.html#custom_jobs.LeaveOneOutJob">[docs]</a><span class="k">class</span> <span class="nc">LeaveOneOutJob</span><span class="p">(</span><span class="n">EngineExecutionJob</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Removes an element from an input list, outputs it on a single separate</span>
+<span class="sd">    output.</span>
+
+<span class="sd">    The input list should be specified as the ``inputs`` parameter, and the</span>
+<span class="sd">    item index as ``index``. The output parameters ``train`` and</span>
+<span class="sd">    ``test`` will be assigned the modified list and extracted element,</span>
+<span class="sd">    respectively.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">command</span><span class="o">=</span><span class="p">[],</span>
+                 <span class="n">referenced_input_files</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">referenced_output_files</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">name</span><span class="o">=</span><span class="s1">&#39;leave_one_out&#39;</span><span class="p">,</span>
+                 <span class="n">param_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">param_dict</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">param_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="s1">&#39;inputs&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">param_dict</span><span class="p">:</span>
+            <span class="n">param_dict</span><span class="p">[</span><span class="s1">&#39;inputs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="s1">&#39;index&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">param_dict</span><span class="p">:</span>
+            <span class="n">param_dict</span><span class="p">[</span><span class="s1">&#39;index&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">LeaveOneOutJob</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">command</span><span class="o">=</span><span class="p">[],</span>
+            <span class="n">referenced_input_files</span><span class="o">=</span><span class="n">referenced_input_files</span><span class="p">,</span>
+            <span class="n">referenced_output_files</span><span class="o">=</span><span class="n">referenced_output_files</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">param_dict</span><span class="o">=</span><span class="n">param_dict</span><span class="p">,</span>
+            <span class="n">has_outputs</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">engine_execution</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="bp">self</span><span class="p">):</span>
+        <span class="n">inputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_dict</span><span class="p">[</span><span class="s1">&#39;inputs&#39;</span><span class="p">]</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_dict</span><span class="p">[</span><span class="s1">&#39;index&#39;</span><span class="p">]</span>
+        <span class="n">output_item</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+        <span class="n">output_list</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[:</span><span class="n">index</span><span class="p">]</span> <span class="o">+</span> <span class="n">inputs</span><span class="p">[</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]</span>
+        <span class="n">out_dict</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;train&#39;</span><span class="p">:</span> <span class="n">output_list</span><span class="p">,</span>
+            <span class="s1">&#39;test&#39;</span><span class="p">:</span> <span class="n">output_item</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">out_dict</span></div>
+
+
+<div class="viewcode-block" id="CrossValidationFoldJob"><a class="viewcode-back" href="../workflow_creation.html#custom_jobs.CrossValidationFoldJob">[docs]</a><span class="k">class</span> <span class="nc">CrossValidationFoldJob</span><span class="p">(</span><span class="n">EngineExecutionJob</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Separates an input list into folds, one (larger) for training, one</span>
+<span class="sd">    (smaller) for testing.</span>
+
+<span class="sd">    The input list ``inputs`` is separated into folds. The number of folds</span>
+<span class="sd">    should be specified as the ``nfolds`` parameter, the fold number as</span>
+<span class="sd">    ``fold``. Outputs are ``train` and ``test`` parameters.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">command</span><span class="o">=</span><span class="p">[],</span>
+                 <span class="n">referenced_input_files</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">referenced_output_files</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">name</span><span class="o">=</span><span class="s1">&#39;cross_validation&#39;</span><span class="p">,</span>
+                 <span class="n">param_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">param_dict</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">param_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="s1">&#39;inputs&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">param_dict</span><span class="p">:</span>
+            <span class="n">param_dict</span><span class="p">[</span><span class="s1">&#39;inputs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="s1">&#39;nfolds&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">param_dict</span><span class="p">:</span>
+            <span class="n">param_dict</span><span class="p">[</span><span class="s1">&#39;nfolds&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+        <span class="k">if</span> <span class="s1">&#39;fold&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">param_dict</span><span class="p">:</span>
+            <span class="n">param_dict</span><span class="p">[</span><span class="s1">&#39;fold&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">CrossValidationFoldJob</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">command</span><span class="o">=</span><span class="p">[],</span>
+            <span class="n">referenced_input_files</span><span class="o">=</span><span class="n">referenced_input_files</span><span class="p">,</span>
+            <span class="n">referenced_output_files</span><span class="o">=</span><span class="n">referenced_output_files</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">param_dict</span><span class="o">=</span><span class="n">param_dict</span><span class="p">,</span>
+            <span class="n">has_outputs</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">engine_execution</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="bp">self</span><span class="p">):</span>
+        <span class="n">inputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_dict</span><span class="p">[</span><span class="s1">&#39;inputs&#39;</span><span class="p">]</span>
+        <span class="n">fold</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_dict</span><span class="p">[</span><span class="s1">&#39;fold&#39;</span><span class="p">]</span>
+        <span class="n">nfolds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_dict</span><span class="p">[</span><span class="s1">&#39;nfolds&#39;</span><span class="p">]</span>
+        <span class="n">nitems</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
+        <span class="n">fold_size</span> <span class="o">=</span> <span class="n">nitems</span> <span class="o">//</span> <span class="n">nfolds</span>
+        <span class="n">nsupp</span> <span class="o">=</span> <span class="n">nitems</span> <span class="o">%</span> <span class="n">nfolds</span>
+        <span class="n">begin</span> <span class="o">=</span> <span class="n">fold_size</span> <span class="o">*</span> <span class="n">fold</span>
+        <span class="n">begin</span> <span class="o">+=</span> <span class="nb">min</span><span class="p">(</span><span class="n">begin</span><span class="p">,</span> <span class="n">nsupp</span><span class="p">)</span>
+        <span class="n">end</span> <span class="o">=</span> <span class="n">fold_size</span> <span class="o">*</span> <span class="p">(</span><span class="n">fold</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">end</span> <span class="o">+=</span> <span class="nb">min</span><span class="p">(</span><span class="n">end</span><span class="p">,</span> <span class="n">nsupp</span><span class="p">)</span>
+        <span class="n">train</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[:</span><span class="n">begin</span><span class="p">]</span> <span class="o">+</span> <span class="n">inputs</span><span class="p">[</span><span class="n">end</span><span class="p">:]</span>
+        <span class="n">test</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="n">begin</span><span class="p">:</span><span class="n">end</span><span class="p">]</span>
+        <span class="n">out_dict</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;train&#39;</span><span class="p">:</span> <span class="n">train</span><span class="p">,</span>
+            <span class="s1">&#39;test&#39;</span><span class="p">:</span> <span class="n">test</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">out_dict</span></div>
+
+
+<div class="viewcode-block" id="ListCatJob"><a class="viewcode-back" href="../workflow_creation.html#custom_jobs.ListCatJob">[docs]</a><span class="k">class</span> <span class="nc">ListCatJob</span><span class="p">(</span><span class="n">EngineExecutionJob</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Concatenates several lists into a single list</span>
+
+<span class="sd">    The input lists should be specified as the ``inputs`` parameter (a list of</span>
+<span class="sd">    lists, thus). The output parameter ``outputs``  will be assigned the concatenated list.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">command</span><span class="o">=</span><span class="p">[],</span>
+                 <span class="n">referenced_input_files</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">referenced_output_files</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">name</span><span class="o">=</span><span class="s1">&#39;list_cat&#39;</span><span class="p">,</span>
+                 <span class="n">param_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">param_dict</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">param_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="s1">&#39;inputs&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">param_dict</span><span class="p">:</span>
+            <span class="n">param_dict</span><span class="p">[</span><span class="s1">&#39;inputs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ListCatJob</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">command</span><span class="o">=</span><span class="p">[],</span>
+            <span class="n">referenced_input_files</span><span class="o">=</span><span class="n">referenced_input_files</span><span class="p">,</span>
+            <span class="n">referenced_output_files</span><span class="o">=</span><span class="n">referenced_output_files</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">param_dict</span><span class="o">=</span><span class="n">param_dict</span><span class="p">,</span>
+            <span class="n">has_outputs</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">engine_execution</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="bp">self</span><span class="p">):</span>
+        <span class="n">inputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_dict</span><span class="p">[</span><span class="s1">&#39;inputs&#39;</span><span class="p">]</span>
+        <span class="n">outputs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">in_list</span> <span class="ow">in</span> <span class="n">inputs</span><span class="p">:</span>
+            <span class="n">outputs</span> <span class="o">+=</span> <span class="n">in_list</span>
+        <span class="n">out_dict</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;outputs&#39;</span><span class="p">:</span> <span class="n">outputs</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">out_dict</span></div>
+
+
+<div class="viewcode-block" id="StrCatJob"><a class="viewcode-back" href="../workflow_creation.html#custom_jobs.StrCatJob">[docs]</a><span class="k">class</span> <span class="nc">StrCatJob</span><span class="p">(</span><span class="n">EngineExecutionJob</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Concatenates inputs into a string</span>
+
+<span class="sd">    Inputs listed in ``input_names`` are concatenated into an output string.</span>
+<span class="sd">    Inputs may be strings or lists of strings. Listes are also concatenated</span>
+<span class="sd">    into a string.</span>
+<span class="sd">    The output parameter is given as the ``output_name`` parameter, if given,</span>
+<span class="sd">    and defaults to `` output`` otherwise.</span>
+<span class="sd">    ``input_names`` is optional and defaults to ``inputs`` (thus by default the</span>
+<span class="sd">    job expects a single list).</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">command</span><span class="o">=</span><span class="p">[],</span>
+                 <span class="n">referenced_input_files</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">referenced_output_files</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">name</span><span class="o">=</span><span class="s1">&#39;strcat&#39;</span><span class="p">,</span>
+                 <span class="n">param_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">param_dict</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">param_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="s1">&#39;input_names&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">param_dict</span><span class="p">:</span>
+            <span class="n">param_dict</span><span class="p">[</span><span class="s1">&#39;input_names&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;inputs&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="s1">&#39;output_name&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">param_dict</span><span class="p">:</span>
+            <span class="n">param_dict</span><span class="p">[</span><span class="s1">&#39;output_name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;output&#39;</span>
+        <span class="n">output_name</span> <span class="o">=</span> <span class="n">param_dict</span><span class="p">[</span><span class="s1">&#39;output_name&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">output_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">param_dict</span><span class="p">:</span>
+            <span class="n">param_dict</span><span class="p">[</span><span class="n">output_name</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">for</span> <span class="n">iname</span> <span class="ow">in</span> <span class="n">param_dict</span><span class="p">[</span><span class="s1">&#39;input_names&#39;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">iname</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">param_dict</span><span class="p">:</span>
+                <span class="n">param_dict</span><span class="p">[</span><span class="n">iname</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">StrCatJob</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">command</span><span class="o">=</span><span class="p">[],</span>
+            <span class="n">referenced_input_files</span><span class="o">=</span><span class="n">referenced_input_files</span><span class="p">,</span>
+            <span class="n">referenced_output_files</span><span class="o">=</span><span class="n">referenced_output_files</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">param_dict</span><span class="o">=</span><span class="n">param_dict</span><span class="p">,</span>
+            <span class="n">has_outputs</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">engine_execution</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="bp">self</span><span class="p">):</span>
+        <span class="n">input_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_dict</span><span class="p">[</span><span class="s1">&#39;input_names&#39;</span><span class="p">]</span>
+        <span class="n">output_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_dict</span><span class="p">[</span><span class="s1">&#39;output_name&#39;</span><span class="p">]</span>
+        <span class="n">outputs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">input_names</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">outputs</span><span class="p">)</span>
+        <span class="n">out_dict</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">output_name</span><span class="p">:</span> <span class="n">output</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">out_dict</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/logo_white_small.png" alt="Logo"/>
+            </a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">soma-workflow version 3.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">custom_jobs</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2011-2021 CEA, Neurospin, France, CATI, France.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

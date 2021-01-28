@@ -1,0 +1,100 @@
+.. _changes_3:
+
+====================================
+Important changes in Soma-Workflow 3
+====================================
+
+.. contents:: Soma-workflow changes in 3
+   :local:
+
+Important changes in Soma-Workflow 3.1
+++++++++++++++++++++++++++++++++++++++
+
+Database format has moved to version 3.0
+
+Client-server communication
+===========================
+
+The communication protocol in client / server mode (now based on ZMQ since 3.0) has been modified to handle multi-threaded, asynchronous requests, and avoid deadlocks. Disconnections are detected at several places and both client and server stopped when this occurs.
+
+Dynamic parameters in workflows
+===============================
+
+Jobs may have "named parameters": a dictionary of parameters, which will be used to build the actual commandline, or pass parameters via a JSON file.
+
+Jobs may have "output parameters": also a dictionary of parameters, which may be written during a job execution as a JSON file, and which can be linked to input parameters of downstream jobs.
+
+Thus workflows may contain some "parameters links" to specify this. Links can transform values to implement map/reduce or cross-validation pattens.
+
+See the details in the :ref:`dynamic_outputs` section.
+
+Jobs parameters as files
+========================
+
+As Soma-Workflow now supports named parameters, the parameters set of a job may also be specified in an input JSON file, rather than on commandline arguments. This may prove useful when the parameters list is long.
+
+See the details in the :ref:`input_params_file` section.
+
+
+Important changes in Soma-Workflow 3.0
+++++++++++++++++++++++++++++++++++++++
+
+Client-server communication
+===========================
+
+In Soma-Workflow 2 (and earlier), the client-server communication was using Pyro3 inside a SSH tunnel. Pyro3 is a python library for remote objects control, which has many advantages but also two important drawbacks:
+
+* It is a bit overkill for what we are doing: Pyro is using a "name server", a server process which has to run somewhere on a network to address objects to remote hosts. This name server is not needed in our application.
+
+* Pyro3 has not been ported to Python 3.
+
+We could have switched to Pyro4, but decided that we could use `ZMQ <http://zeromq.org/>`_ instead. So we did. Soma-Workflow 3 communications are now based on ZMQ (still through a SSH tunnel).
+
+As a consequence, the communication protocol is completely different from what it used to be, and is incompatible (this would also be incompatible using Pyro4). The database format has also changed, so Soma-Workflow 3 cannot be used to recover workflows created with version 2. Older servers have to be shut down before SWF 3 is used. Note that shutting down servers can be done via the graphical interface in ``soma_workflow_gui`` when connecting to a remote computing resource, but SWF3 has te be installed on the resource.
+
+
+Python 2 and Python 3
+=====================
+
+Soma-Workflow 2 could only run using Python 2. The removal of Pyro3 has allowed to port to Python 3. Soma-Workflow 3 can be run using either Python 2 and 3.
+
+However SWF is using in its communications and database some picked objects, which could not be made compatible between python2 and 3, so if one now have the choice of python version, he has to be consistent with this choice:
+
+Client and server should use the same Python version
+----------------------------------------------------
+
+* Both ends of the communication should use the same python version (2 or 3). Connections made by the client normally ensure that the servers are run using the same version of Python.
+
+* But the same version of python thus has to be installed on both client and server machines. Of course both versions can be installed.
+
+* Moreover if a server is run once using a given version of python, all client connections have to be made using the same version of python. A clear error message will be issued in case of mismatch.
+
+Playing with both python versions at the same time
+--------------------------------------------------
+
+If python version has to be switched for any reason, then the servers have to be killed, and the database erased.
+
+However it is possible to setup two computing resources configurations, to be used one for python2 and one for python3. Both can run on the same physical server. They should specify different files and directories for database, log files, file transfers etc. They will thus not share the same workflows and will look totally independent, even if running on the same machine or cluster.
+
+Both servers can run on the same machine at the same time: the client will take care of taking to the right one (which was not done in previous versions of SWF). Note however that the "kill servers" option in the connection dialog in the GUI will kill all of them.
+
+On a local machine, it is also possible to use two different configurations. But one of them will not be the default one, so you will have to specify it (when running ``soma_workflow_gui`` or connecting via the client API). The configuration has to be created "by hand" in the config file (``$HOME/.soma-workflow.cfg`` by default), and must specify that it is a "light mode' server with a ``local_basic`` scheduler.
+
+Moreover a new configuration option ``ALLOWED_PYTHON_VERSIONS`` (on client side) allows to mark some resources with some versions of python. Non-matching versions will be discarded, and will not be displayed in the GUI. Connection to the default local resource will also try to use a matching one.
+
+Ex:
+
+.. code-block:: ini
+
+    [localmachine-py3]
+    database_file = /home/someone/.soma-workflow/py3/soma_workflow.db
+    path_translation_files = brainvisa{/home/someone/.brainvisa/soma-workflow.translation}
+    engine_log_dir    = /home/someone/.soma-workflow/py3/logs/is234199
+    engine_log_level = ERROR
+    server_log_file = /home/someone/.soma-workflow/py3/logs/is234199/server_log
+    server_log_level = ERROR
+    transfered_files_dir = /home/someone/.soma-workflow/py3/transfered_files
+    light_mode = 1
+    scheduler_type = local_basic
+    allowed_python_versions = 3
+

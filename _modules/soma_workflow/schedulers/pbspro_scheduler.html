@@ -1,0 +1,778 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>soma_workflow.schedulers.pbspro_scheduler &#8212; soma-workflow version 3.1 documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    
+    <link rel="shortcut icon" href="../../../_static/icon_small.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">soma-workflow version 3.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">soma_workflow.schedulers.pbspro_scheduler</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for soma_workflow.schedulers.pbspro_scheduler</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">with_statement</span><span class="p">,</span> <span class="n">print_function</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">organization: I2BM, Neurospin, Gif-sur-Yvette, France</span>
+
+<span class="sd">license:CeCILL version 2, http://www.cecill.info/licences/Licence_CeCILL_V2-en.html</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+<span class="kn">from</span> <span class="nn">..scheduler</span> <span class="kn">import</span> <span class="n">Scheduler</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">socket</span>
+<span class="kn">import</span> <span class="nn">six</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">soma_workflow.constants</span> <span class="k">as</span> <span class="nn">constants</span>
+<span class="kn">from</span> <span class="nn">soma_workflow.errors</span> <span class="kn">import</span> <span class="n">DRMError</span><span class="p">,</span> <span class="n">ExitTimeoutException</span>
+<span class="kn">from</span> <span class="nn">soma_workflow</span> <span class="kn">import</span> <span class="n">configuration</span>
+<span class="kn">from</span> <span class="nn">soma_workflow.configuration</span> <span class="kn">import</span> <span class="n">Configuration</span>
+<span class="kn">import</span> <span class="nn">tempfile</span>
+<span class="kn">from</span> <span class="nn">soma_workflow</span> <span class="kn">import</span> <span class="n">subprocess</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+
+<span class="k">class</span> <span class="nc">JobTemplate</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">remoteCommand</span><span class="p">,</span> <span class="n">outputPath</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">errorPath</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">remoteCommand</span> <span class="o">=</span> <span class="n">remoteCommand</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">outputPath</span> <span class="o">=</span> <span class="n">outputPath</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">errorPath</span> <span class="o">=</span> <span class="n">errorPath</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inputPath</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">jobName</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">queue</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">env</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nativeSpecification</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">joinFiles</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">workingDirectory</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">build_pbs_script</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">script_file</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">script_file</span><span class="p">:</span>
+            <span class="n">script_file_</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkstemp</span><span class="p">()</span>
+            <span class="n">script_file</span> <span class="o">=</span> <span class="n">script_file_</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">script_file_</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">script_file</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;#!/bin/sh</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="c1"># PBS options</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">jobName</span><span class="p">:</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;#PBS -N </span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">jobName</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="s1">&#39;_&#39;</span><span class="p">))</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="p">:</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;#PBS -q </span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="p">)</span>
+            <span class="c1"># if self.env:</span>
+                <span class="c1"># var = &#39;,&#39;.join([&#39;&quot;%s=%s&quot;&#39; % (k, v.replace(&#39;&quot;&#39;, &#39;\\&quot;&#39;))</span>
+                                <span class="c1"># for k, v in six.iteritems(self.env)])</span>
+                <span class="c1"># f.write(&#39;#PBS -v %s\n&#39; % var)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">nativeSpecification</span><span class="p">:</span>
+                <span class="n">native_spec</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nativeSpecification</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">native_spec</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                    <span class="n">native_spec</span> <span class="o">=</span> <span class="p">[</span><span class="n">native_spec</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">native_spec</span><span class="p">:</span>
+                    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;#PBS </span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">spec</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">joinFiles</span><span class="p">:</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;#PBS -j oe</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+
+            <span class="c1"># env variables</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">var</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;export </span><span class="si">%s</span><span class="s1">=</span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span>
+
+            <span class="c1"># working directory</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">workingDirectory</span><span class="p">:</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;cd &quot;</span><span class="si">%s</span><span class="s1">&quot;</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">workingDirectory</span><span class="p">)</span>
+
+            <span class="c1"># commandline</span>
+            <span class="n">escaped_command</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;&quot;&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\\</span><span class="s1">&quot;&#39;</span><span class="p">)</span>
+                               <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">remoteCommand</span><span class="p">]</span>
+            <span class="n">redirect</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputPath</span><span class="p">:</span>
+                <span class="c1"># handle stdin redirection. Use bash redirection, I don&#39;t</span>
+                <span class="c1"># know  another way.</span>
+                <span class="n">redirect</span> <span class="o">=</span> <span class="s1">&#39; &lt; &quot;</span><span class="si">%s</span><span class="s1">&quot;&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputPath</span>
+
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;&quot;&#39;</span> <span class="o">+</span> <span class="s1">&#39;&quot; &quot;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">escaped_command</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;&quot;&#39;</span> <span class="o">+</span> <span class="n">redirect</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;ljp.pbspro_scheduler&#39;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;build_pbs_script: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">script_file</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">script_file</span>
+
+    <span class="k">def</span> <span class="nf">qsub_command</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">script_file</span><span class="p">):</span>
+        <span class="n">cmd</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;qsub&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputPath</span><span class="p">:</span>
+            <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;-o&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputPath</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">errorPath</span><span class="p">:</span>
+            <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;-e&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">errorPath</span><span class="p">]</span>
+        <span class="n">cmd</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">script_file</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cmd</span>
+
+    <span class="k">def</span> <span class="nf">run_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">script_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">keep_script_file</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">rm_script</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">script_file</span><span class="p">:</span>
+            <span class="n">rm_script</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">script_file</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_pbs_script</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">cmd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qsub_command</span><span class="p">(</span><span class="n">script_file</span><span class="p">)</span>
+            <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;ljp.pbspro_scheduler&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;run job: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="nb">repr</span><span class="p">(</span><span class="n">cmd</span><span class="p">))</span>
+            <span class="n">job_id</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">(</span>
+                <span class="n">cmd</span><span class="p">,</span> <span class="n">stderr</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">STDOUT</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;job_id: &#39;</span> <span class="o">+</span> <span class="nb">repr</span><span class="p">(</span><span class="n">job_id</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">job_id</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">rm_script</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">keep_script_file</span><span class="p">:</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">script_file</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">rm_script</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;job </span><span class="si">%s</span><span class="s1"> script file: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span>
+                            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">jobName</span><span class="p">,</span> <span class="n">script_file</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="PBSProScheduler"><a class="viewcode-back" href="../../../scheduler.html#soma_workflow.schedulers.pbspro_scheduler.PBSProScheduler">[docs]</a><span class="k">class</span> <span class="nc">PBSProScheduler</span><span class="p">(</span><span class="n">Scheduler</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Scheduling using a PBS Pro session.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="c1"># dict</span>
+    <span class="n">parallel_job_submission_info</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">logger</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">_configured_native_spec</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">tmp_file_path</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">is_sleeping</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">FAKE_JOB</span> <span class="o">=</span> <span class="o">-</span><span class="mi">167</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">parallel_job_submission_info</span><span class="p">,</span>
+                 <span class="n">tmp_file_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">configured_native_spec</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+        <span class="nb">super</span><span class="p">(</span><span class="n">PBSProScheduler</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;ljp.pbspro_scheduler&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">wake</span><span class="p">()</span>
+
+        <span class="c1"># self.hostname = socket.gethostname()</span>
+        <span class="c1"># use full qualified hostname, because of a probable bug on our</span>
+        <span class="c1"># cluster.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hostname</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">getfqdn</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">parallel_job_submission_info</span> <span class="o">=</span> <span class="n">parallel_job_submission_info</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_configured_native_spec</span> <span class="o">=</span> <span class="n">configured_native_spec</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Parallel job submission info: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                          <span class="nb">repr</span><span class="p">(</span><span class="n">parallel_job_submission_info</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">tmp_file_path</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tmp_file_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="s2">&quot;tmp&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tmp_file_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">tmp_file_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setup_pbs_variant</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="fm">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
+
+<div class="viewcode-block" id="PBSProScheduler.submit_simple_test_job"><a class="viewcode-back" href="../../../scheduler.html#soma_workflow.schedulers.pbspro_scheduler.PBSProScheduler.submit_simple_test_job">[docs]</a>    <span class="k">def</span> <span class="nf">submit_simple_test_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">outstr</span><span class="p">,</span> <span class="n">out_o_file</span><span class="p">,</span> <span class="n">out_e_file</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Create a job to test</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">outputPath</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">:</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hostname</span><span class="p">,</span>
+                                <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tmp_file_path</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">out_o_file</span><span class="p">)))</span>
+        <span class="n">errorPath</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">:</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hostname</span><span class="p">,</span>
+                               <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tmp_file_path</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">out_e_file</span><span class="p">)))</span>
+        <span class="n">jobTemplate</span> <span class="o">=</span> <span class="n">JobTemplate</span><span class="p">(</span><span class="n">remoteCommand</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;echo&#39;</span><span class="p">,</span> <span class="n">outstr</span><span class="p">],</span>
+                                  <span class="n">outputPath</span><span class="o">=</span><span class="n">outputPath</span><span class="p">,</span> <span class="n">errorPath</span><span class="o">=</span><span class="n">errorPath</span><span class="p">)</span>
+
+        <span class="c1"># print(&quot;jobTemplate=&quot;+repr(jobTemplate))</span>
+        <span class="c1"># print(&quot;jobTemplate.remoteCommand=&quot;+repr(jobTemplate.remoteCommand))</span>
+        <span class="c1"># print(&quot;jobTemplate.outputPath=&quot;+repr(jobTemplate.outputPath))</span>
+        <span class="c1"># print(&quot;jobTemplate.errorPath=&quot;+repr(jobTemplate.errorPath))</span>
+
+        <span class="n">jobid</span> <span class="o">=</span> <span class="n">jobTemplate</span><span class="o">.</span><span class="n">run_job</span><span class="p">()</span>
+        <span class="c1"># print(&quot;jobid=&quot;+jobid)</span>
+        <span class="n">retval</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wait_job</span><span class="p">(</span><span class="n">jobid</span><span class="p">)</span></div>
+        <span class="c1"># print(&quot;retval=&quot;+repr(retval))</span>
+
+<div class="viewcode-block" id="PBSProScheduler.get_pbs_version"><a class="viewcode-back" href="../../../scheduler.html#soma_workflow.schedulers.pbspro_scheduler.PBSProScheduler.get_pbs_version">[docs]</a>    <span class="k">def</span> <span class="nf">get_pbs_version</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        get PBS implementation and version. May be PBS Pro or Torque/PBS</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pbs_version: tuple (2 strings)</span>
+<span class="sd">            (implementation, version)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">cmd</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;qstat&#39;</span><span class="p">,</span> <span class="s1">&#39;--version&#39;</span><span class="p">]</span>
+        <span class="n">verstr</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">stderr</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">STDOUT</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span>
+            <span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verstr</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;pbs_version =&#39;</span><span class="p">):</span>
+            <span class="n">impl</span> <span class="o">=</span> <span class="s1">&#39;pbspro&#39;</span>
+            <span class="n">ver</span> <span class="o">=</span> <span class="n">verstr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;=&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">impl</span> <span class="o">=</span> <span class="s1">&#39;torque&#39;</span>
+            <span class="n">ver</span> <span class="o">=</span> <span class="n">verstr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">impl</span><span class="p">,</span> <span class="n">ver</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PBSProScheduler.setup_pbs_variant"><a class="viewcode-back" href="../../../scheduler.html#soma_workflow.schedulers.pbspro_scheduler.PBSProScheduler.setup_pbs_variant">[docs]</a>    <span class="k">def</span> <span class="nf">setup_pbs_variant</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        determine PBS implementation / version and set internal behaviour accordingly</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">impl</span><span class="p">,</span> <span class="n">ver</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_pbs_version</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pbs_impl</span> <span class="o">=</span> <span class="n">impl</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pbs_version</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">ver</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;PBS implementation: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pbs_impl</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;PBS version: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pbs_version</span><span class="p">))</span></div>
+
+    <span class="k">def</span> <span class="nf">_setParallelJob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                        <span class="n">job_template</span><span class="p">,</span>
+                        <span class="n">parallel_job_info</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Set the job template information for a parallel job submission.</span>
+<span class="sd">        The configuration file must provide the parallel job submission</span>
+<span class="sd">        information specific to the cluster in use.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        job_template: JobTemplate</span>
+<span class="sd">            job template instance</span>
+<span class="sd">        parallel_job_info: dict</span>
+<span class="sd">            parallel info dict, containing:</span>
+<span class="sd">            nodes_number: int</span>
+<span class="sd">                maximum node number the job requests (on a unique machine or</span>
+<span class="sd">                separated machine depending on the parallel configuration)</span>
+<span class="sd">            cpu_per_node: int</span>
+<span class="sd">                nomber of CPUs or cores per node</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_sleeping</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">wake</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;&gt;&gt; _setParallelJob&quot;</span><span class="p">)</span>
+        <span class="n">configuration_name</span> <span class="o">=</span> <span class="n">parallel_job_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;config_name&#39;</span><span class="p">,</span> <span class="s1">&#39;native&#39;</span><span class="p">)</span>
+        <span class="n">cluster_specific_cfg_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parallel_job_submission_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="n">configuration_name</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">cluster_specific_cfg_name</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">attribute</span> <span class="ow">in</span> <span class="n">configuration</span><span class="o">.</span><span class="n">PARALLEL_DRMAA_ATTRIBUTES</span><span class="p">:</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parallel_job_submission_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">attribute</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">value</span><span class="p">:</span>
+                    <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
+                        <span class="s2">&quot;</span><span class="si">{config_name}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">cluster_specific_cfg_name</span><span class="p">)</span>
+                    <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{nodes_number}</span><span class="s2">&quot;</span><span class="p">,</span>
+                                          <span class="nb">repr</span><span class="p">(</span><span class="n">parallel_job_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                                              <span class="s1">&#39;nodes_number&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)))</span>
+
+                    <span class="nb">setattr</span><span class="p">(</span><span class="n">job_template</span><span class="p">,</span> <span class="n">attribute</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                        <span class="s2">&quot;Parallel job, drmaa attribute = </span><span class="si">%s</span><span class="s2">, value = </span><span class="si">%s</span><span class="s2"> &quot;</span><span class="p">,</span>
+                        <span class="n">attribute</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">parallel_job_info</span><span class="p">:</span>
+            <span class="n">native_spec</span> <span class="o">=</span> <span class="n">job_template</span><span class="o">.</span><span class="n">nativeSpecification</span>
+            <span class="k">if</span> <span class="n">native_spec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">native_spec</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">native_spec</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="n">native_spec</span> <span class="o">=</span> <span class="p">[</span><span class="n">native_spec</span><span class="p">]</span>
+            <span class="n">native_spec</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="s1">&#39;-l nodes=</span><span class="si">%(nodes_number)s</span><span class="s1">:ppn=</span><span class="si">%(cpu_per_node)s</span><span class="s1">&#39;</span>
+                <span class="o">%</span> <span class="n">parallel_job_info</span><span class="p">)</span>
+            <span class="n">job_template</span><span class="o">.</span><span class="n">nativeSpecification</span> <span class="o">=</span> <span class="n">native_spec</span>
+
+        <span class="n">job_env</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">parallel_env_v</span> <span class="ow">in</span> <span class="n">configuration</span><span class="o">.</span><span class="n">PARALLEL_JOB_ENV</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parallel_job_submission_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">parallel_env_v</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">value</span><span class="p">:</span>
+                <span class="n">job_env</span><span class="p">[</span><span class="n">parallel_env_v</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">job_template</span><span class="o">.</span><span class="n">env</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">job_template</span><span class="o">.</span><span class="n">env</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">job_template</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">job_env</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Parallel job environment : &quot;</span> <span class="o">+</span> <span class="nb">repr</span><span class="p">(</span><span class="n">job_env</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;&lt;&lt; _setParallelJob&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">job_template</span>
+
+<div class="viewcode-block" id="PBSProScheduler.job_submission"><a class="viewcode-back" href="../../../scheduler.html#soma_workflow.schedulers.pbspro_scheduler.PBSProScheduler.job_submission">[docs]</a>    <span class="k">def</span> <span class="nf">job_submission</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        job: soma_workflow.client.Job</span>
+<span class="sd">            job to be submitted</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        job_id: string</span>
+<span class="sd">            job id</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_sleeping</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">wake</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">job</span><span class="o">.</span><span class="n">is_engine_execution</span><span class="p">:</span>
+            <span class="c1"># barrier jobs don&#39;t actually go through job submission</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;job_submission, PBS - barrier job.&#39;</span><span class="p">)</span>
+            <span class="n">job</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">DONE</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">FAKE_JOB</span>
+
+        <span class="n">command</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">plain_command</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;command: &quot;</span> <span class="o">+</span> <span class="nb">repr</span><span class="p">(</span><span class="n">command</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;job.name=&quot;</span> <span class="o">+</span> <span class="nb">repr</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+
+        <span class="n">stdout_file</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">plain_stdout</span><span class="p">()</span>
+        <span class="n">stderr_file</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">plain_stderr</span><span class="p">()</span>
+        <span class="n">stdin</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">plain_stdin</span><span class="p">()</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">outputPath</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">:</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hostname</span><span class="p">,</span> <span class="n">stdout_file</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">stderr_file</span><span class="p">:</span>
+                <span class="n">errorPath</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">:</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hostname</span><span class="p">,</span> <span class="n">stderr_file</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">errorPath</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">jobTemplate</span> <span class="o">=</span> <span class="n">JobTemplate</span><span class="p">(</span><span class="n">remoteCommand</span><span class="o">=</span><span class="n">command</span><span class="p">,</span>
+                                      <span class="n">outputPath</span><span class="o">=</span><span class="n">outputPath</span><span class="p">,</span>
+                                      <span class="n">errorPath</span><span class="o">=</span><span class="n">errorPath</span><span class="p">)</span>
+            <span class="n">jobTemplate</span><span class="o">.</span><span class="n">jobName</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">name</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;jobTemplate=&quot;</span> <span class="o">+</span> <span class="nb">repr</span><span class="p">(</span><span class="n">jobTemplate</span><span class="p">)</span>
+                             <span class="o">+</span> <span class="s2">&quot; command[0]=&quot;</span> <span class="o">+</span> <span class="nb">repr</span><span class="p">(</span><span class="n">command</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                             <span class="o">+</span> <span class="s2">&quot; command[1:]=&quot;</span> <span class="o">+</span> <span class="nb">repr</span><span class="p">(</span><span class="n">command</span><span class="p">[</span><span class="mi">1</span><span class="p">:]))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">&quot;hostname and stdout_file= [</span><span class="si">%s</span><span class="s2">]:</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hostname</span><span class="p">,</span> <span class="n">stdout_file</span><span class="p">))</span>
+            <span class="c1"># ensure there is a directory for stdout</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">stdout_file</span><span class="p">)):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">stdout_file</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">job</span><span class="o">.</span><span class="n">join_stderrout</span><span class="p">:</span>
+                <span class="c1"># ensure there is a directory for stderr</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">stderr_file</span><span class="p">)):</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">stderr_file</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="n">job</span><span class="o">.</span><span class="n">stdin</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;stdin: &quot;</span> <span class="o">+</span> <span class="nb">repr</span><span class="p">(</span><span class="n">stdin</span><span class="p">))</span>
+                <span class="n">jobTemplate</span><span class="o">.</span><span class="n">inputPath</span> <span class="o">=</span> <span class="n">stdin</span>
+
+            <span class="n">working_directory</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">plain_working_directory</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">working_directory</span><span class="p">:</span>
+                <span class="n">jobTemplate</span><span class="o">.</span><span class="n">workingDirectory</span> <span class="o">=</span> <span class="n">working_directory</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="s2">&quot;JOB NATIVE_SPEC &quot;</span> <span class="o">+</span> <span class="nb">repr</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">native_specification</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="s2">&quot;CONFIGURED NATIVE SPEC &quot;</span> <span class="o">+</span> <span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_configured_native_spec</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="n">job</span><span class="o">.</span><span class="n">queue</span><span class="p">:</span>
+                <span class="n">jobTemplate</span><span class="o">.</span><span class="n">queue</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">queue</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;queue: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">queue</span><span class="p">))</span>
+
+            <span class="n">native_spec</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="n">job</span><span class="o">.</span><span class="n">native_specification</span><span class="p">:</span>
+                <span class="n">native_spec</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">native_specification</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_configured_native_spec</span><span class="p">:</span>
+                <span class="n">native_spec</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_configured_native_spec</span>
+
+            <span class="k">if</span> <span class="n">native_spec</span><span class="p">:</span>
+                <span class="n">jobTemplate</span><span class="o">.</span><span class="n">nativeSpecification</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">native_spec</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="s2">&quot;NATIVE specification &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">native_spec</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="n">job</span><span class="o">.</span><span class="n">parallel_job_info</span><span class="p">:</span>
+                <span class="n">jobTemplate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_setParallelJob</span><span class="p">(</span><span class="n">jobTemplate</span><span class="p">,</span>
+                                                   <span class="n">job</span><span class="o">.</span><span class="n">parallel_job_info</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">job</span><span class="o">.</span><span class="n">env</span><span class="p">:</span>
+                <span class="n">jobTemplate</span><span class="o">.</span><span class="n">env</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">env</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;before submit command: &quot;</span> <span class="o">+</span> <span class="nb">repr</span><span class="p">(</span><span class="n">command</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;before submit job.name=&quot;</span> <span class="o">+</span> <span class="nb">repr</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+            <span class="n">job_id</span> <span class="o">=</span> <span class="n">jobTemplate</span><span class="o">.</span><span class="n">run_job</span><span class="p">()</span>
+
+        <span class="k">except</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="c1"># try:  # this will be done in the engine</span>
+            <span class="c1">#     f = open(stderr_file, &quot;a&quot;)</span>
+            <span class="c1">#     f.write(&quot;Error in job submission: %s: %s, output: %s&quot;</span>
+            <span class="c1">#             % (type(e), e, e.output))</span>
+            <span class="c1">#     f.close()</span>
+            <span class="c1"># except Exception:</span>
+            <span class="c1">#     pass</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Error in job submission: </span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="se">\n</span><span class="s2">Output:</span><span class="se">\n</span><span class="si">%s</span><span class="s2">&quot;</span>
+                              <span class="o">%</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">),</span> <span class="n">e</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">decode</span><span class="p">()),</span>
+                              <span class="n">exc_info</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">())</span>
+            <span class="k">raise</span> <span class="n">DRMError</span><span class="p">(</span><span class="s2">&quot;Job submission error: </span><span class="si">%s</span><span class="s2">:</span><span class="se">\n</span><span class="si">%s</span><span class="se">\n</span><span class="s2">Output:</span><span class="se">\n</span><span class="si">%s</span><span class="s2">&quot;</span>
+                           <span class="o">%</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">),</span> <span class="n">e</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">decode</span><span class="p">()))</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;exception in PBS job submission:&#39;</span> <span class="o">+</span> <span class="nb">repr</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">stderr_file</span><span class="p">,</span> <span class="s2">&quot;wa&quot;</span><span class="p">)</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;Error in job submission: </span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">),</span> <span class="n">e</span><span class="p">))</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="k">pass</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Error in job submission: </span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">),</span> <span class="n">e</span><span class="p">),</span>
+                              <span class="n">exc_info</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">())</span>
+            <span class="k">raise</span> <span class="n">DRMError</span><span class="p">(</span><span class="s2">&quot;Job submission error: </span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">),</span> <span class="n">e</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">job_id</span></div>
+
+<div class="viewcode-block" id="PBSProScheduler.kill_job"><a class="viewcode-back" href="../../../scheduler.html#soma_workflow.schedulers.pbspro_scheduler.PBSProScheduler.kill_job">[docs]</a>    <span class="k">def</span> <span class="nf">kill_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scheduler_job_id</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        scheduler_job_id: string</span>
+<span class="sd">            Job id for the scheduling system (DRMAA for example)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_sleeping</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">wake</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">scheduler_job_id</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">FAKE_JOB</span><span class="p">:</span>
+            <span class="k">return</span>  <span class="c1"># barriers are not run, thus cannot be killed.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;kill job: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">scheduler_job_id</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_job_status</span><span class="p">(</span><span class="n">scheduler_job_id</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">status</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="n">constants</span><span class="o">.</span><span class="n">DONE</span><span class="p">,</span> <span class="n">constants</span><span class="o">.</span><span class="n">FAILED</span><span class="p">):</span>
+                <span class="n">cmd</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;qdel&#39;</span><span class="p">,</span> <span class="n">scheduler_job_id</span><span class="p">]</span>
+                <span class="n">subprocess</span><span class="o">.</span><span class="n">check_call</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">),</span> <span class="n">e</span><span class="p">))</span></div>
+            <span class="c1"># raise</span>
+
+<div class="viewcode-block" id="PBSProScheduler.get_job_extended_status"><a class="viewcode-back" href="../../../scheduler.html#soma_workflow.schedulers.pbspro_scheduler.PBSProScheduler.get_job_extended_status">[docs]</a>    <span class="k">def</span> <span class="nf">get_job_extended_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scheduler_job_id</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Get job full status in a dictionary (from qstat in json format)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_sleeping</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">wake</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">scheduler_job_id</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">FAKE_JOB</span><span class="p">:</span>
+            <span class="c1"># a barrier job is done as soon as it is started.</span>
+            <span class="k">return</span> <span class="n">constants</span><span class="o">.</span><span class="n">DONE</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pbs_impl</span> <span class="o">==</span> <span class="s1">&#39;pbspro&#39;</span><span class="p">:</span>
+                <span class="n">cmd</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;qstat&#39;</span><span class="p">,</span> <span class="s1">&#39;-x&#39;</span><span class="p">,</span> <span class="s1">&#39;-f&#39;</span><span class="p">,</span> <span class="s1">&#39;-F&#39;</span><span class="p">,</span> <span class="s1">&#39;json&#39;</span><span class="p">,</span> <span class="n">scheduler_job_id</span><span class="p">]</span>
+                <span class="n">json_str</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+                <span class="n">super_status</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">json_str</span><span class="p">)</span>
+
+            <span class="k">else</span><span class="p">:</span>  <span class="c1"># torque/pbs</span>
+                <span class="kn">import</span> <span class="nn">xml.etree.cElementTree</span> <span class="k">as</span> <span class="nn">ET</span>
+                <span class="n">cmd</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;qstat&#39;</span><span class="p">,</span> <span class="s1">&#39;-x&#39;</span><span class="p">,</span> <span class="n">scheduler_job_id</span><span class="p">]</span>
+                <span class="n">xml_str</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+                <span class="n">super_status</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="n">s_xml</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">xml_str</span><span class="p">)</span>
+                <span class="n">xjob</span> <span class="o">=</span> <span class="n">s_xml</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">job</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="n">parsing</span> <span class="o">=</span> <span class="p">[(</span><span class="n">xjob</span><span class="p">,</span> <span class="n">job</span><span class="p">)]</span>
+                <span class="k">while</span> <span class="n">parsing</span><span class="p">:</span>
+                    <span class="n">element</span><span class="p">,</span> <span class="n">parent</span> <span class="o">=</span> <span class="n">parsing</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">element</span><span class="p">:</span>
+                        <span class="n">tag</span> <span class="o">=</span> <span class="n">child</span><span class="o">.</span><span class="n">tag</span>
+                        <span class="k">if</span> <span class="n">tag</span> <span class="o">==</span> <span class="s1">&#39;Job_Id&#39;</span><span class="p">:</span>
+                            <span class="n">super_status</span><span class="p">[</span><span class="s1">&#39;Jobs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">child</span><span class="o">.</span><span class="n">text</span><span class="p">:</span> <span class="n">job</span><span class="p">}</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">child</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                                <span class="n">current</span> <span class="o">=</span> <span class="p">{}</span>
+                                <span class="n">parsing</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">child</span><span class="p">,</span> <span class="n">current</span><span class="p">))</span>
+                            <span class="k">else</span><span class="p">:</span>
+                                <span class="n">current</span> <span class="o">=</span> <span class="n">child</span><span class="o">.</span><span class="n">text</span>
+                            <span class="n">parent</span><span class="p">[</span><span class="n">tag</span><span class="p">]</span> <span class="o">=</span> <span class="n">current</span>
+                    <span class="n">current</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">),</span> <span class="n">e</span><span class="p">))</span>
+            <span class="k">raise</span>
+        <span class="n">status</span> <span class="o">=</span> <span class="n">super_status</span><span class="p">[</span><span class="s1">&#39;Jobs&#39;</span><span class="p">][</span><span class="n">scheduler_job_id</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;get_job_extended_status: &#39;</span> <span class="o">+</span> <span class="nb">repr</span><span class="p">(</span><span class="n">scheduler_job_id</span><span class="p">)</span>
+                          <span class="o">+</span> <span class="s1">&#39;: &#39;</span> <span class="o">+</span> <span class="nb">repr</span><span class="p">(</span><span class="n">status</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">status</span></div>
+
+    <span class="k">def</span> <span class="nf">get_pbs_status_codes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pbs_impl</span> <span class="o">==</span> <span class="s1">&#39;pbspro&#39;</span><span class="p">:</span>
+            <span class="k">class</span> <span class="nc">codes</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+                <span class="n">ARRAY_STARTED</span> <span class="o">=</span> <span class="s1">&#39;B&#39;</span>
+                <span class="n">EXITING</span> <span class="o">=</span> <span class="s1">&#39;E&#39;</span>
+                <span class="n">FINISHED</span> <span class="o">=</span> <span class="s1">&#39;F&#39;</span>
+                <span class="n">HELD</span> <span class="o">=</span> <span class="s1">&#39;H&#39;</span>
+                <span class="n">MOVED</span> <span class="o">=</span> <span class="s1">&#39;M&#39;</span>
+                <span class="n">QUEUED</span> <span class="o">=</span> <span class="s1">&#39;Q&#39;</span>
+                <span class="n">RUNNING</span> <span class="o">=</span> <span class="s1">&#39;R&#39;</span>
+                <span class="n">SUSPENDED</span> <span class="o">=</span> <span class="s1">&#39;S&#39;</span>
+                <span class="n">MOVING</span> <span class="o">=</span> <span class="s1">&#39;T&#39;</span>
+                <span class="n">SUSPEND_KB</span> <span class="o">=</span> <span class="s1">&#39;U&#39;</span>
+                <span class="n">WAITING</span> <span class="o">=</span> <span class="s1">&#39;W&#39;</span>
+                <span class="n">SUBJOB_COMPLETE</span> <span class="o">=</span> <span class="s1">&#39;X&#39;</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># torque/pbs</span>
+            <span class="k">class</span> <span class="nc">codes</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+                <span class="n">ARRAY_STARTED</span> <span class="o">=</span> <span class="s1">&#39;B&#39;</span>  <span class="c1"># unused</span>
+                <span class="n">EXITING</span> <span class="o">=</span> <span class="s1">&#39;E&#39;</span>
+                <span class="n">FINISHED</span> <span class="o">=</span> <span class="s1">&#39;C&#39;</span>
+                <span class="n">HELD</span> <span class="o">=</span> <span class="s1">&#39;H&#39;</span>
+                <span class="n">MOVED</span> <span class="o">=</span> <span class="s1">&#39;M&#39;</span>  <span class="c1"># unused</span>
+                <span class="n">QUEUED</span> <span class="o">=</span> <span class="s1">&#39;Q&#39;</span>
+                <span class="n">RUNNING</span> <span class="o">=</span> <span class="s1">&#39;R&#39;</span>
+                <span class="n">SUSPENDED</span> <span class="o">=</span> <span class="s1">&#39;S&#39;</span>
+                <span class="n">MOVING</span> <span class="o">=</span> <span class="s1">&#39;T&#39;</span>
+                <span class="n">SUSPEND_KB</span> <span class="o">=</span> <span class="s1">&#39;U&#39;</span>  <span class="c1"># unused</span>
+                <span class="n">WAITING</span> <span class="o">=</span> <span class="s1">&#39;W&#39;</span>
+                <span class="n">SUBJOB_COMPLETE</span> <span class="o">=</span> <span class="s1">&#39;X&#39;</span>  <span class="c1"># unused</span>
+        <span class="k">return</span> <span class="n">codes</span>
+
+<div class="viewcode-block" id="PBSProScheduler.get_job_status"><a class="viewcode-back" href="../../../scheduler.html#soma_workflow.schedulers.pbspro_scheduler.PBSProScheduler.get_job_status">[docs]</a>    <span class="k">def</span> <span class="nf">get_job_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scheduler_job_id</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        scheduler_job_id: string</span>
+<span class="sd">            Job id for the scheduling system (DRMAA for example)</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        status: string</span>
+<span class="sd">            Job status as defined in constants.JOB_STATUS</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">scheduler_job_id</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">FAKE_JOB</span><span class="p">:</span>
+            <span class="c1"># it&#39;s a barrier job, doesn&#39;t exist in DRMS, and it&#39;s always done.</span>
+            <span class="k">return</span> <span class="n">constants</span><span class="o">.</span><span class="n">DONE</span>
+        <span class="n">codes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_pbs_status_codes</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_job_extended_status</span><span class="p">(</span><span class="n">scheduler_job_id</span><span class="p">)</span>
+            <span class="n">state</span> <span class="o">=</span> <span class="n">status</span><span class="p">[</span><span class="s1">&#39;job_state&#39;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="s1">&#39;get_job_status for: &#39;</span> <span class="o">+</span> <span class="nb">repr</span><span class="p">(</span><span class="n">scheduler_job_id</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;: &#39;</span><span class="p">,</span> <span class="nb">repr</span><span class="p">(</span><span class="n">state</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">constants</span><span class="o">.</span><span class="n">UNDETERMINED</span>
+        <span class="k">if</span> <span class="n">state</span> <span class="o">==</span> <span class="n">codes</span><span class="o">.</span><span class="n">ARRAY_STARTED</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">constants</span><span class="o">.</span><span class="n">RUNNING</span>
+        <span class="k">elif</span> <span class="n">state</span> <span class="o">==</span> <span class="n">codes</span><span class="o">.</span><span class="n">EXITING</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">constants</span><span class="o">.</span><span class="n">RUNNING</span>  <span class="c1"># FIXME not exactly that</span>
+        <span class="k">elif</span> <span class="n">state</span> <span class="o">==</span> <span class="n">codes</span><span class="o">.</span><span class="n">FINISHED</span><span class="p">:</span>
+            <span class="n">exit_value</span> <span class="o">=</span> <span class="n">status</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;Exit_status&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">exit_value</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">constants</span><span class="o">.</span><span class="n">FAILED</span>
+            <span class="k">return</span> <span class="n">constants</span><span class="o">.</span><span class="n">DONE</span>
+        <span class="k">elif</span> <span class="n">state</span> <span class="o">==</span> <span class="n">codes</span><span class="o">.</span><span class="n">HELD</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">constants</span><span class="o">.</span><span class="n">USER_SYSTEM_ON_HOLD</span>  <span class="c1"># FIXME or USER_ON_HOLD ?</span>
+        <span class="k">elif</span> <span class="n">state</span> <span class="o">==</span> <span class="n">codes</span><span class="o">.</span><span class="n">MOVED</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">constants</span><span class="o">.</span><span class="n">USER_SYSTEM_SUSPENDED</span>  <span class="c1"># FIXME not exactly that</span>
+        <span class="k">elif</span> <span class="n">state</span> <span class="o">==</span> <span class="n">codes</span><span class="o">.</span><span class="n">QUEUED</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">constants</span><span class="o">.</span><span class="n">QUEUED_ACTIVE</span>
+        <span class="k">elif</span> <span class="n">state</span> <span class="o">==</span> <span class="n">codes</span><span class="o">.</span><span class="n">RUNNING</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">constants</span><span class="o">.</span><span class="n">RUNNING</span>
+        <span class="k">elif</span> <span class="n">state</span> <span class="o">==</span> <span class="n">codes</span><span class="o">.</span><span class="n">SUSPENDED</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">constants</span><span class="o">.</span><span class="n">USER_SYSTEM_SUSPENDED</span>  <span class="c1"># FIXME or SYSTEM_SUSPENDED ?</span>
+        <span class="k">elif</span> <span class="n">state</span> <span class="o">==</span> <span class="n">codes</span><span class="o">.</span><span class="n">MOVING</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">constants</span><span class="o">.</span><span class="n">USER_SUSPENDED</span>  <span class="c1"># FIXME not exactly that</span>
+        <span class="k">elif</span> <span class="n">state</span> <span class="o">==</span> <span class="n">codes</span><span class="o">.</span><span class="n">SUSPEND_KB</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">constants</span><span class="o">.</span><span class="n">USER_SYSTEM_SUSPENDED</span>  <span class="c1"># is it that ?</span>
+        <span class="k">elif</span> <span class="n">state</span> <span class="o">==</span> <span class="n">codes</span><span class="o">.</span><span class="n">WAITING</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">constants</span><span class="o">.</span><span class="n">QUEUED_ACTIVE</span>  <span class="c1"># FIXME not exactly that</span>
+        <span class="k">elif</span> <span class="n">state</span> <span class="o">==</span> <span class="n">codes</span><span class="o">.</span><span class="n">SUBJOB_COMPLETE</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">constants</span><span class="o">.</span><span class="n">DELETE_PENDING</span>  <span class="c1"># is it that ?</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">constants</span><span class="o">.</span><span class="n">UNDETERMINED</span></div>
+
+<div class="viewcode-block" id="PBSProScheduler.get_job_exit_info"><a class="viewcode-back" href="../../../scheduler.html#soma_workflow.schedulers.pbspro_scheduler.PBSProScheduler.get_job_exit_info">[docs]</a>    <span class="k">def</span> <span class="nf">get_job_exit_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scheduler_job_id</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        The exit info consists of 4 values returned in a tuple:</span>
+<span class="sd">        **exit_status**: string</span>
+<span class="sd">            one of the constants.JOB_EXIT_STATUS values</span>
+<span class="sd">        **exit_value**: int</span>
+<span class="sd">            exit code of the command (normally 0 in case of success)</span>
+<span class="sd">        **term_sig**: int</span>
+<span class="sd">            termination signal, 0 IF ok</span>
+<span class="sd">        **resource_usage**: unicode</span>
+<span class="sd">            string in the shape</span>
+<span class="sd">            ``&#39;cpupercent=60 mem=13530kb cput=00:00:12&#39;`` etc. Items may include:</span>
+
+<span class="sd">            * cpupercent</span>
+<span class="sd">            * cput</span>
+<span class="sd">            * mem</span>
+<span class="sd">            * vmem</span>
+<span class="sd">            * ncpus</span>
+<span class="sd">            * walltime</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        scheduler_job_id: string</span>
+<span class="sd">            Job id for the scheduling system (DRMAA for example)</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        exit_info: tuple</span>
+<span class="sd">            exit_status, exit_value, term_sig, resource_usage</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_sleeping</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">wake</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">scheduler_job_id</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">FAKE_JOB</span><span class="p">:</span>
+            <span class="n">res_resourceUsage</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+            <span class="n">res_status</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">FINISHED_REGULARLY</span>
+            <span class="n">res_exitValue</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">res_termSignal</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">res_status</span><span class="p">,</span> <span class="n">res_exitValue</span><span class="p">,</span> <span class="n">res_termSignal</span><span class="p">,</span>
+                    <span class="n">res_resourceUsage</span><span class="p">)</span>
+
+        <span class="n">res_resourceUsage</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">res_status</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">EXIT_UNDETERMINED</span>
+        <span class="n">res_exitValue</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">res_termSignal</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="s2">&quot;  ==&gt; Start to find info of job </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">scheduler_job_id</span><span class="p">))</span>
+            <span class="n">status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_job_extended_status</span><span class="p">(</span><span class="n">scheduler_job_id</span><span class="p">)</span>
+            <span class="n">jid_out</span> <span class="o">=</span> <span class="n">status</span><span class="p">[</span><span class="s1">&#39;Output_Path&#39;</span><span class="p">]</span>
+            <span class="n">exit_value</span> <span class="o">=</span> <span class="n">status</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;Exit_status&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">signaled</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">term_sig</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">if</span> <span class="n">exit_value</span> <span class="o">&gt;=</span> <span class="mi">256</span><span class="p">:</span>
+                <span class="n">signaled</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">term_sig</span> <span class="o">=</span> <span class="n">exit_value</span> <span class="o">%</span> <span class="mi">256</span>
+            <span class="n">coredumped</span> <span class="o">=</span> <span class="p">(</span><span class="n">term_sig</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">aborted</span> <span class="o">=</span> <span class="p">(</span><span class="n">exit_value</span> <span class="o">&lt;=</span> <span class="o">-</span><span class="mi">4</span> <span class="ow">and</span> <span class="n">exit_value</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="mi">6</span><span class="p">)</span>
+            <span class="n">exit_status</span> <span class="o">=</span> <span class="n">exit_value</span>
+            <span class="n">resource_usage</span> <span class="o">=</span> <span class="n">status</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;resources_used&#39;</span><span class="p">,</span> <span class="p">{})</span>
+            <span class="c1"># jid_out, exit_value, signaled, term_sig, coredumped, aborted, exit_status, resource_usage = self._drmaa.wait(</span>
+            <span class="c1">#     scheduler_job_id, self._drmaa.TIMEOUT_NO_WAIT)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;  ==&gt; jid_out=&quot;</span> <span class="o">+</span> <span class="nb">repr</span><span class="p">(</span><span class="n">jid_out</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;  ==&gt; exit_value=&quot;</span> <span class="o">+</span> <span class="nb">repr</span><span class="p">(</span><span class="n">exit_value</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;  ==&gt; signaled=&quot;</span> <span class="o">+</span> <span class="nb">repr</span><span class="p">(</span><span class="n">signaled</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;  ==&gt; term_sig=&quot;</span> <span class="o">+</span> <span class="nb">repr</span><span class="p">(</span><span class="n">term_sig</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;  ==&gt; coredumped=&quot;</span> <span class="o">+</span> <span class="nb">repr</span><span class="p">(</span><span class="n">coredumped</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;  ==&gt; aborted=&quot;</span> <span class="o">+</span> <span class="nb">repr</span><span class="p">(</span><span class="n">aborted</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;  ==&gt; exit_status=&quot;</span> <span class="o">+</span> <span class="nb">repr</span><span class="p">(</span><span class="n">exit_status</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="s2">&quot;  ==&gt; resource_usage=&quot;</span> <span class="o">+</span> <span class="nb">repr</span><span class="p">(</span><span class="n">resource_usage</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="n">aborted</span><span class="p">:</span>
+                <span class="n">res_status</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">EXIT_ABORTED</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">exit_value</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">res_status</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">FINISHED_REGULARLY</span>
+                    <span class="n">res_exitValue</span> <span class="o">=</span> <span class="n">exit_status</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">res_exitValue</span> <span class="o">=</span> <span class="n">exit_status</span>
+                    <span class="k">if</span> <span class="n">signaled</span><span class="p">:</span>
+                        <span class="n">res_status</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">FINISHED_TERM_SIG</span>
+                        <span class="n">res_termSignal</span> <span class="o">=</span> <span class="n">term_sig</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="c1"># in soma-workflow a job with a non-zero exit code</span>
+                        <span class="c1"># has still finished regularly (ran without being</span>
+                        <span class="c1"># interrupted)</span>
+                        <span class="c1"># res_status = constants.EXIT_ABORTED</span>
+                        <span class="n">res_status</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">FINISHED_REGULARLY</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  ==&gt; res_status=&quot;</span> <span class="o">+</span> <span class="nb">repr</span><span class="p">(</span><span class="n">res_status</span><span class="p">))</span>
+            <span class="n">res_resourceUsage</span> <span class="o">=</span> <span class="sa">u</span><span class="s1">&#39;&#39;</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">six</span><span class="o">.</span><span class="n">iteritems</span><span class="p">(</span><span class="n">resource_usage</span><span class="p">):</span>
+                <span class="n">res_resourceUsage</span> <span class="o">=</span> <span class="n">res_resourceUsage</span> <span class="o">+</span> \
+                    <span class="n">k</span> <span class="o">+</span> <span class="sa">u</span><span class="s1">&#39;=&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="o">+</span> <span class="sa">u</span><span class="s1">&#39; &#39;</span>
+
+        <span class="k">except</span> <span class="n">ExitTimeoutException</span><span class="p">:</span>
+            <span class="n">res_status</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">EXIT_UNDETERMINED</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;  ==&gt; wait time out&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">(</span><span class="n">res_status</span><span class="p">,</span> <span class="n">res_exitValue</span><span class="p">,</span> <span class="n">res_termSignal</span><span class="p">,</span> <span class="n">res_resourceUsage</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PBSProScheduler.wait_job"><a class="viewcode-back" href="../../../scheduler.html#soma_workflow.schedulers.pbspro_scheduler.PBSProScheduler.wait_job">[docs]</a>    <span class="k">def</span> <span class="nf">wait_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_id</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">poll_interval</span><span class="o">=</span><span class="mf">0.3</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Wait for a specific job to be terminated.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_job_extended_status</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
+        <span class="n">stime</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="k">while</span> <span class="n">status</span><span class="p">[</span><span class="s1">&#39;job_state&#39;</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;F&#39;</span><span class="p">,</span> <span class="p">):</span>
+            <span class="k">if</span> <span class="n">timeout</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">stime</span> <span class="o">&gt;</span> <span class="n">timeout</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ExitTimeoutException</span><span class="p">(</span><span class="s1">&#39;wait_job timed out&#39;</span><span class="p">)</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">poll_interval</span><span class="p">)</span>
+            <span class="n">status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_job_extended_status</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">status</span></div>
+
+<div class="viewcode-block" id="PBSProScheduler.build_scheduler"><a class="viewcode-back" href="../../../scheduler.html#soma_workflow.schedulers.pbspro_scheduler.PBSProScheduler.build_scheduler">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">build_scheduler</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Build an instance of PBSProScheduler</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">sch</span> <span class="o">=</span> <span class="n">PBSProScheduler</span><span class="p">(</span>
+            <span class="n">config</span><span class="o">.</span><span class="n">get_parallel_job_config</span><span class="p">(),</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">&quot;~&quot;</span><span class="p">),</span>
+            <span class="n">configured_native_spec</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">get_native_specification</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">sch</span></div></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/logo_white_small.png" alt="Logo"/>
+            </a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">soma-workflow version 3.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">soma_workflow.schedulers.pbspro_scheduler</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2011-2021 CEA, Neurospin, France, CATI, France.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

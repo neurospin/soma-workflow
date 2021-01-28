@@ -1,0 +1,716 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Installation and configuration &#8212; soma-workflow version 3.1 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    
+    <link rel="shortcut icon" href="_static/icon_small.ico"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Changelog" href="changelog.html" />
+    <link rel="prev" title="Supporting new computing resources: writing a Scheduler implementation" href="scheduler.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="changelog.html" title="Changelog"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="scheduler.html" title="Supporting new computing resources: writing a Scheduler implementation"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">soma-workflow version 3.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Installation and configuration</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="installation-and-configuration">
+<h1>Installation and configuration<a class="headerlink" href="#installation-and-configuration" title="Permalink to this headline">¶</a></h1>
+<div class="contents local topic" id="id1">
+<p class="topic-title">Installation and Configuration</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#mono-process-application-on-a-multiple-core-machine" id="id15">Mono process application on a multiple core machine</a></p></li>
+<li><p><a class="reference internal" href="#client-server-application-client" id="id16">Client-server application: Client</a></p></li>
+<li><p><a class="reference internal" href="#client-server-application-server" id="id17">Client-server application: Server</a></p></li>
+<li><p><a class="reference internal" href="#mono-process-application-on-clusters" id="id18">Mono process application on clusters</a></p></li>
+<li><p><a class="reference internal" href="#running-servers-and-jobs-in-a-container" id="id19">Running servers and jobs in a container</a></p></li>
+<li><p><a class="reference internal" href="#server-configuration-examples" id="id20">Server configuration examples</a></p></li>
+</ul>
+</div>
+<div class="section" id="mono-process-application-on-a-multiple-core-machine">
+<h2><a class="toc-backref" href="#id15">Mono process application on a multiple core machine</a><a class="headerlink" href="#mono-process-application-on-a-multiple-core-machine" title="Permalink to this headline">¶</a></h2>
+<p><strong>No configuration is needed to use Soma-workflow on a multiple core machine.</strong></p>
+<p>See <a class="reference external" href="http://brainvisa.info/soma-workflow">Soma-workflow main page</a> for installation.</p>
+</div>
+<div class="section" id="client-server-application-client">
+<span id="client-intall-config"></span><h2><a class="toc-backref" href="#id16">Client-server application: Client</a><a class="headerlink" href="#client-server-application-client" title="Permalink to this headline">¶</a></h2>
+<p>This page describes the installation and configuration of the Soma-workflow client.</p>
+<div class="section" id="requirements">
+<h3>Requirements<a class="headerlink" href="#requirements" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Python <em>version 2.7 or more</em></p></li>
+<li><p><a class="reference external" href="http://zeromq.org">ZeroMQ</a></p></li>
+<li><p><a class="reference external" href="http://www.lag.net/paramiko/">Paramiko</a> <em>version 1.7 or more</em>. Paramiko in
+only required if the computing resource is remote (see config).</p></li>
+<li><p>For the GUI: Qt <em>version 4.6.2 or more</em>, <a class="reference external" href="http://www.riverbankcomputing.co.uk/software/pyqt/intro">PyQt</a> <em>version 4.7.2 or more</em>, or <a class="reference external" href="http://www.pyside.org">PySide</a> <em>version 1.1.1 or more</em> and optionally <a class="reference external" href="http://matplotlib.sourceforge.net/">matplotlib</a> <em>version 0.99 or more</em></p></li>
+</ul>
+</div>
+<div class="section" id="installation">
+<h3>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h3>
+<ol class="arabic">
+<li><p>Download: <a class="reference external" href="https://pypi.python.org/pypi/soma-workflow">soma-workflow</a></p></li>
+<li><p>Installation:</p>
+<blockquote>
+<div><div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ sudo python setup.py install
+or
+$ python setup.py install --prefix my_directory
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+</ol>
+<p>Start the GUI with the command <em>soma_workflow_gui</em> and/or import the soma_workflow.client module to use the Python API.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="gui.html#gui"><span class="std std-ref">Graphical User Interface</span></a> for the GUI documentation, <a class="reference internal" href="client_API.html#client-api"><span class="std std-ref">Python API</span></a> for Soma-workflow Python API documentation and <a class="reference internal" href="examples.html#examples"><span class="std std-ref">Examples</span></a>.</p>
+</div>
+</div>
+<div class="section" id="configuration-created-automatically">
+<span id="client-configuration"></span><h3>Configuration (Created automatically)<a class="headerlink" href="#configuration-created-automatically" title="Permalink to this headline">¶</a></h3>
+<p>The configuration syntax is the <a class="reference external" href="http://docs.python.org/library/configparser.html">ConfigParser</a>  syntax. The configuration file is located in “$HOME/.soma-workflow.cfg”. This file will be created automatically once a server has been established (see <a class="reference internal" href="#server-management"><span class="std std-ref">Server installation using “Server Management”</span></a>).</p>
+<p>There is one section for each computing resource (that is for each Soma-workflow database server).</p>
+<p>Only four items are required:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>CLUSTER_ADDRESS</p></li>
+<li><p>SUBMITTING_MACHINES only for remote ssh tunneling</p></li>
+<li><p>QUEUES</p></li>
+<li><p>LOGIN</p></li>
+</ul>
+</div></blockquote>
+<p>The two first items are mandatory and the last ones are
+optional. The values of these configuration items are set up at each
+Soma-workflow server installation (see <a class="reference internal" href="#server-configuration"><span class="std std-ref">Server configuration (Created automatically)</span></a>). Ask these item values to the Soma-workflow administrator if you did not install the server yourself.</p>
+<p>The second item, <code class="docutils literal notranslate"><span class="pre">SUBMITTING_MACHINES</span></code>, is mandatory when the server connection is on a remote machine, and optional when client and server is the same machine (and does not require a ssh connection and tunneling). The general case thus is to use ssh and provide <code class="docutils literal notranslate"><span class="pre">SUBMITTING_MACHINES</span></code>. The local client/server mode however may be useful to allow client disconnections (and for testing purposes).</p>
+<p>Configuration file example (2 computing resources are configured):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">Titan</span><span class="p">]</span>
+
+<span class="n">CLUSTER_ADDRESS</span>     <span class="o">=</span> <span class="n">titan</span><span class="o">.</span><span class="n">mylab</span><span class="o">.</span><span class="n">fr</span>
+<span class="n">SUBMITTING_MACHINES</span> <span class="o">=</span> <span class="n">titan0</span>
+
+<span class="n">QUEUES</span> <span class="o">=</span> <span class="n">test</span> <span class="n">long</span>
+<span class="n">LOGIN</span> <span class="o">=</span> <span class="n">my_login_on_titan</span>
+
+
+<span class="p">[</span><span class="n">LabDesktops</span><span class="p">]</span>
+
+<span class="n">CLUSTER_ADDRESS</span>     <span class="o">=</span> <span class="n">mydesktop</span><span class="o">.</span><span class="n">mylab</span><span class="o">.</span><span class="n">fr</span>
+<span class="n">SUBMITTING_MACHINES</span> <span class="o">=</span> <span class="n">mydesktop</span>
+</pre></div>
+</div>
+<p><em>Configuration items required on the client side</em></p>
+<blockquote>
+<div><dl class="simple">
+<dt><strong>CLUSTER_ADDRESS</strong></dt><dd><p>Address of the host computing resource host to log on.
+Address of the host which has to be used to access the cluster remotely.</p>
+</dd>
+<dt><strong>SUBMITTING_MACHINES</strong></dt><dd><p>Address of the submitting hosts, that are the hosts from which the jobs
+are supposed to be submitted. In most of the cases, there is only one
+submitting host. The addresses are local on the cluster.
+Syntax: “host1 host2 host3”</p>
+</dd>
+</dl>
+</div></blockquote>
+<p id="conf-client-option"><em>Configuration items optional on the client side:</em></p>
+<blockquote id="allowed-python-versions">
+<div><dl>
+<dt><strong>ALLOWED_PYTHON_VERSIONS</strong></dt><dd><p><em>Added in Soma-Workflow 3.0</em></p>
+<p>a coma-separated list of major python versions that can be used with the
+resource. It can be used to filter out unmatching versions so that the
+GUI automatically connects to a matching one, and does not allow to connect
+to others.</p>
+</dd>
+<dt><strong>LOGIN</strong></dt><dd><p>To pre-fill the login field in the GUI when login to the resource.</p>
+</dd>
+<dt><strong>QUEUES</strong></dt><dd><p>List of the available queues. This item is only used in the GUI to make
+easier the selection of the queue when submitting a workflow.
+Syntax: “queue1 queue2 queue3”</p>
+</dd>
+</dl>
+</div></blockquote>
+<blockquote id="python-command-option">
+<div><dl>
+<dt><strong>PYTHON_COMMAND</strong></dt><dd><p>Option added in Soma-Workflow 3.1.</p>
+<p>May be set on client side in the computing resource configuration, to specify the way the client will start the server. Soma-workflow server is normally started using Python language modules, as commands in the shape:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python -m soma_workflow.start_workflow_engine
+</pre></div>
+</div>
+<p>If this config option is not set, the <code class="docutils literal notranslate"><span class="pre">python</span></code> command is automatically adjusted to either <code class="docutils literal notranslate"><span class="pre">python2</span></code> or <code class="docutils literal notranslate"><span class="pre">python3</span></code> to match the client python version (they should be the same due to objects formats (“pickles”)).</p>
+<p>But in some cases, including when the soma-workflow servers should run inside a container like <a class="reference external" href="../../casa-distro-3.0/index.html">Casa-Distro</a> Singularity containers, entering the container involves an additional indirection, so we should specify, like:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">PYTHON_COMMAND</span> <span class="o">=</span> <span class="n">bv</span> <span class="n">python</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</div></blockquote>
+</div>
+</div>
+<div class="section" id="client-server-application-server">
+<span id="server"></span><h2><a class="toc-backref" href="#id17">Client-server application: Server</a><a class="headerlink" href="#client-server-application-server" title="Permalink to this headline">¶</a></h2>
+<p>This page explains how to configure, install and run the Soma-workflow
+database server.</p>
+<p>In the client-server mode the communication between the processes is done using
+the module zro which is included in the soma_workflow package and is inspired on <a class="reference external" href="https://pythonhosted.org/Pyro4/">Pyro4</a> syntax and uses the zmq package. In principle object are registered to the zro object server. At registration an uri is produced which can be used by other programs to instanciation proxy objects.A method call on a proxy object will contact the remote object and return its answer. For instance, the Workflow Engines query a proxy object of the database server to call its method.</p>
+<div class="section" id="server-requirements">
+<span id="id2"></span><h3>Requirements<a class="headerlink" href="#server-requirements" title="Permalink to this headline">¶</a></h3>
+<a class="reference internal image-reference" href="_images/third_parties.png"><img alt="_images/third_parties.png" src="_images/third_parties.png" style="width: 584.0px; height: 291.2px;" /></a>
+<p>Here is the list of the server dependencies:</p>
+<ul class="simple">
+<li><p>A distributed resource management system (DRMS) such as Grid Engine, Condor,
+Torque/PBS, LSF..</p></li>
+<li><p>A implementation of <a class="reference external" href="http://www.drmaa.org/">DRMAA</a> 1.0 for the DRMS in C if available, unless a specific <a class="reference internal" href="scheduler.html"><span class="doc">scheduler exists</span></a></p></li>
+<li><p>Python <em>version 2.7 or more</em></p></li>
+<li><p><a class="reference external" href="http:/zeromq.org">zmq</a></p></li>
+<li><p><a class="reference external" href="http://docs.python.org/library/sqlite3.html">SQLite</a> <em>version 3 or more</em></p></li>
+</ul>
+<p>The implementations of DRMAA tested successfully with Soma-workflow:</p>
+<blockquote>
+<div><table class="docutils align-default">
+<colgroup>
+<col style="width: 13%" />
+<col style="width: 88%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>DRMS</p></th>
+<th class="head"><p>DRMAA implementation</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Torque 2.0.0</p></td>
+<td><p><a class="reference external" href="http://sourceforge.net/projects/pbspro-drmaa/files/pbs-drmaa/1.0/">PBS DRMAA 1.0.13</a> from <a class="reference external" href="http://apps.man.poznan.pl/trac/pbs-drmaa">http://apps.man.poznan.pl/trac/pbs-drmaa</a></p></td>
+</tr>
+<tr class="row-odd"><td><p>LSF 7.0</p></td>
+<td><p>FedStage LSF DRMAA 1.0.3</p></td>
+</tr>
+<tr class="row-even"><td><p>Grid Engine 6.2u5&amp;6</p></td>
+<td><p>Embeded implementation</p></td>
+</tr>
+<tr class="row-odd"><td><p>Condor 7.4.0</p></td>
+<td><p>Embeded implementation</p></td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+<p>On the contrary, we had problems with the following implementations:</p>
+<blockquote>
+<div><table class="docutils align-default">
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 75%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>DRMS</p></th>
+<th class="head"><p>DRMAA implementation</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>PBSPro 18.1.2</p></td>
+<td><p>DRMAA is failing, use the <a class="reference internal" href="scheduler.html#pbspro"><span class="std std-ref">PBSPro scheduler</span></a></p></td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+</div>
+<div class="section" id="server-installation-using-server-management">
+<span id="server-management"></span><h3>Server installation using “Server Management”<a class="headerlink" href="#server-installation-using-server-management" title="Permalink to this headline">¶</a></h3>
+<p>In the menu of soma-workflow, we can see a button called, Server Management.
+See the menu of the below figure, we can find a “Server Management” button</p>
+<a class="reference internal image-reference" href="_images/ServerManagementMenu.png"><img alt="_images/ServerManagementMenu.png" src="_images/ServerManagementMenu.png" style="width: 723.0px; height: 406.0px;" /></a>
+<p>Opening “Server Management” button, and then we can see three buttons, called:
+Add Server, Remove Server, Remove Server on Client, as shown in
+the below figure. Since the configuration is needed for both sides (client and server), “Remove Server” means that remove the installation on the server and client (BE CAREFULL: it will lose all your soma-workflow data on your server and client, $HOME/.soma-workflow and $HOME/.soma-workflow.cfg). “Remove Server on Client” means that it will remove all the data only on client side, while the server side is still running as usual.</p>
+<a class="reference internal image-reference" href="_images/ServerManagement.png"><img alt="_images/ServerManagement.png" src="_images/ServerManagement.png" style="width: 508.0px; height: 358.0px;" /></a>
+<p>Opening “Add Server” button, we can see a window as shown below:</p>
+<a class="reference internal image-reference" href="_images/ServerManagementAddServer.png"><img alt="_images/ServerManagementAddServer.png" src="_images/ServerManagementAddServer.png" style="width: 489.0px; height: 569.0px;" /></a>
+<p>Before the server installation, we strongly recommend to use SSH with authentication key instead of password. See “<a class="reference external" href="http://askubuntu.com/questions/46930/how-can-i-set-up-password-less-ssh-login">http://askubuntu.com/questions/46930/how-can-i-set-up-password-less-ssh-login</a>”. Otherwise, you need to input password each time. We should setup the Server Address, SSH Login, while the other items are optional. (password is not mandatory when you are using authentication key)</p>
+<p>Since the configuration is needed for both sides (client and server),
+the first button, called “Install on Server and Client”, is used for configuring both sides. Since many clients can connect to one server, “Setup Client without Installation on Server” is used for configurating only client side.</p>
+<p>Since soma-workflow is based on the DRMAA on the server side, to make sure that your LD_LIBRARY_PATH contains libdrmaa.so or export DRMAA_LIBRARY_PATH to the absolute path of libdrmaa.so on your server.</p>
+</div>
+<div class="section" id="server-configuration-created-automatically">
+<span id="server-configuration"></span><h3>Server configuration (Created automatically)<a class="headerlink" href="#server-configuration-created-automatically" title="Permalink to this headline">¶</a></h3>
+<p>This section defines the required and optional configuration items. This file can be found on the both side of client and server with the path “$HOME/.soma-workflow.cfg”.</p>
+<p>The configuration file syntax is the <a class="reference external" href="http://docs.python.org/library/configparser.html">ConfigParser</a>  syntax. All the configuration items are defined in one section. The name of
+the section is the resource identifier (ex: “Titan”).</p>
+<p>Configuration file example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">Titan</span><span class="p">]</span>
+
+<span class="n">DATABASE_FILE</span>        <span class="o">=</span> <span class="n">path</span><span class="o">/</span><span class="n">soma_workflow</span><span class="o">.</span><span class="n">db</span>
+<span class="n">TRANSFERED_FILES_DIR</span> <span class="o">=</span> <span class="n">path</span><span class="o">/</span><span class="n">transfered_files</span>
+<span class="n">SERVER_NAME</span>          <span class="o">=</span> <span class="n">soma_workflow_server_for_titan</span>
+
+<span class="c1"># optional limitation of the jobs in various queues</span>
+<span class="n">MAX_JOB_IN_QUEUE</span> <span class="o">=</span> <span class="p">{</span><span class="mi">10</span><span class="p">}</span> <span class="n">test</span><span class="p">{</span><span class="mi">50</span><span class="p">}</span> <span class="n">long</span><span class="p">{</span><span class="mi">3</span><span class="p">}</span>
+<span class="n">MAX_JOB_RUNNING</span>  <span class="o">=</span> <span class="p">{</span><span class="mi">100</span><span class="p">}</span> <span class="n">test</span><span class="p">{</span><span class="mi">500</span><span class="p">}</span> <span class="n">long</span><span class="p">{</span><span class="mi">30</span><span class="p">}</span>
+
+<span class="c1"># optional logging</span>
+<span class="n">SERVER_LOG_FILE</span>   <span class="o">=</span> <span class="n">path</span><span class="o">/</span><span class="n">logs</span><span class="o">/</span><span class="n">log_server</span>
+<span class="n">SERVER_LOG_FORMAT</span> <span class="o">=</span> <span class="o">%</span><span class="p">(</span><span class="n">asctime</span><span class="p">)</span><span class="n">s</span> <span class="o">=&gt;</span> <span class="n">line</span> <span class="o">%</span><span class="p">(</span><span class="n">lineno</span><span class="p">)</span><span class="n">s</span><span class="p">:</span> <span class="o">%</span><span class="p">(</span><span class="n">message</span><span class="p">)</span><span class="n">s</span>
+<span class="n">SERVER_LOG_LEVEL</span>  <span class="o">=</span> <span class="n">ERROR</span>
+<span class="n">ENGINE_LOG_DIR</span>    <span class="o">=</span> <span class="n">path</span><span class="o">/</span><span class="n">logs</span><span class="o">/</span>
+<span class="n">ENGINE_LOG_FORMAT</span> <span class="o">=</span> <span class="o">%</span><span class="p">(</span><span class="n">asctime</span><span class="p">)</span><span class="n">s</span> <span class="o">=&gt;</span> <span class="n">line</span> <span class="o">%</span><span class="p">(</span><span class="n">lineno</span><span class="p">)</span><span class="n">s</span><span class="p">:</span> <span class="o">%</span><span class="p">(</span><span class="n">message</span><span class="p">)</span><span class="n">s</span>
+<span class="n">ENGINE_LOG_LEVEL</span>  <span class="o">=</span> <span class="n">ERROR</span>
+
+<span class="c1"># remote access information</span>
+<span class="n">CLUSTER_ADDRESS</span>     <span class="o">=</span> <span class="n">titan</span><span class="o">.</span><span class="n">mylab</span><span class="o">.</span><span class="n">fr</span>
+<span class="n">SUBMITTING_MACHINES</span> <span class="o">=</span> <span class="n">titan0</span>
+</pre></div>
+</div>
+<div class="section" id="configuration-items-required-on-the-server-side">
+<h4>Configuration items required on the server side:<a class="headerlink" href="#configuration-items-required-on-the-server-side" title="Permalink to this headline">¶</a></h4>
+<blockquote>
+<div><dl>
+<dt><strong>TRANSFERED_FILES_DIR</strong></dt><dd><p>Path of the directory where the transfered files will be copied. The
+directory must be empty and will be managed entirely by Soma-workflow.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Do not copy any file in this directory. Soma_workflow manages the
+entire directory and might delete any external file.</p>
+</div>
+</dd>
+<dt><strong>SERVER_NAME</strong> (to be replace with DB_SERVER_NAME, will be clearer)</dt><dd><p>Name of the database server.</p>
+</dd>
+</dl>
+</div></blockquote>
+</div>
+<div class="section" id="configuration-items-optional-on-the-server-side">
+<span id="conf-server-option"></span><h4>Configuration items optional on the server side:<a class="headerlink" href="#configuration-items-optional-on-the-server-side" title="Permalink to this headline">¶</a></h4>
+<blockquote>
+<div><dl>
+<dt><strong>DATABASE_FILE</strong></dt><dd><p>Path of the SQLite database file. The file will be created the first time
+the database server will be started.</p>
+<p>This option was mandatory up to soma-workflow-2.6, and is optional since
+2.7. Additionally in 2.7, the database version number will be appended to
+the database file name, to avoid mixing several incompatible databases when
+switching between different soma-workflow versions.</p>
+</dd>
+<dt><strong>MAX_JOB_IN_QUEUE</strong></dt><dd><p>Maximum number of job in each queue. If a queue does not appear here,
+Soma-workflow considers that there is no limitation.
+The syntax is “{default_queue_max_nb_jobs} queue_name1{max_nb_jobs_1} queue_name_2{max_nb_job_2}”. Example: “{5} test{20}”</p>
+</dd>
+<dt><strong>MAX_JOB_RUNNING</strong> (new in 2.8)</dt><dd><p>Like MAX_JOB_IN_QUEUE, but also limits the number of jobs which may be
+running through a given queue. It thus includes actually running jobs, plus
+queued jobs (which may get to running status at any time).</p>
+<p>Note that cluster queues may impose their own running jobs limits, which
+are not controlled by this parameter, thus the minimum limit will actually
+be effective.</p>
+</dd>
+<dt><strong>PATH_TRANSLATION_FILES</strong></dt><dd><p>Specify here the shared resource path translation files, mandatory to use
+the SharedResourcePath objects (see <a class="reference internal" href="concepts.html#shared-resource-path-concept"><span class="std std-ref">Shared Resource Path</span></a>).
+Each translation file is associated with a namespace. That way several
+applications can use the same  identifiers without risk.
+The syntax is “namespace_1{translation_file_path_11}
+namespace1{translation_file_path_12} namespace2{translation_file_path_2}”</p>
+</dd>
+<dt><strong>DRMAA_IMPLEMENTATION</strong></dt><dd><p>Set this item to “PBS” if you use FedStage PBS DRMAA 1.0 implementation,
+otherwise it does not has to be set.
+Soma-workflow is designed to be independent of the DRMS and the DRMAA
+implementation. However, we found two bugs in the FedStage PBS DRMAA 1.0
+implementation, and correct it temporarily writing specific code for this
+implementation in Soma-workflow at 2 locations (soma_workflow.engine Drmaa
+class: __init__ and submit_job method).</p>
+</dd>
+<dt><strong>NATIVE_SPECIFICATION</strong></dt><dd><p>Some specific option/function of the computing resource you want to use
+might not be available among the list of Soma-workflow Job attributes.
+Use the native specification attribute to use these specific functionalities.
+Once configured it will be applied to every jobs submitted to the resource
+unless a different value is specified in the Job attribute native_specification.</p>
+<dl class="simple">
+<dt><em>Example:</em> Specification of a job walltime and more:</dt><dd><ul class="simple">
+<li><p>using a PBS cluster: NATIVE_SPECIFICATION= -l walltime=10:00:00,pmem=16gb</p></li>
+<li><p>using a SGE cluster: NATIVE_SPECIFICATION= -l h_rt=10:00:00</p></li>
+</ul>
+</dd>
+</dl>
+</dd>
+<dt><strong>SCHEDULER_TYPE</strong></dt><dd><dl>
+<dt>Scheduler type:</dt><dd><p><strong>local_basic</strong>: simple builtin scheduler (the one used for the local single process mode). It may be used also on a remote machine (without DRMS support).</p>
+<p><strong>drmaa</strong>: cluster or grid scheduler, based on DRMAA. This is the scheduler used normally on servers, and is the default in such a case.</p>
+<p><strong>mpi</strong>: mono-process scheduler using MPI for the <a class="reference internal" href="#light-mode-config"><span class="std std-ref">Mono process application on clusters</span></a> (light) mode.</p>
+</dd>
+</dl>
+</dd>
+<dt><strong>SHARED_TEMPORARY_DIR</strong></dt><dd><p>Directory where to generate temporary files used between jobs. The directory should be visible by all processing nodes (on a cluster), and the filesystem should be large enough to store temporary files during a whole workflow execution.</p>
+</dd>
+</dl>
+<dl id="container-command">
+<dt><strong>CONTAINER_COMMAND</strong></dt><dd><p>This item is a prefix prepended to all jobs commands. It is typically used to drive execution through a container system such as <a class="reference external" href="https://www.sylabs.io/singularity/">singularity</a> or <a class="reference external" href="https://www.docker.com/">docker</a>. In this situation, jobs commandlines have to specify the container command and options, for instance:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>singularity <span class="nb">exec</span> --bind /data_dir /opt/singularity_images/appropriate_image.simg command_to_run arg1 arg2...
+</pre></div>
+</div>
+<p>The <strong>CONTAINER_COMMAND</strong> parameter will allow to build the container-related beginning for jobs commandlines. It is actually a list, given in a python syntax. Shell Environment variables replacement is allowed, and a special pattern, <code class="docutils literal notranslate"><span class="pre">{#command}</span></code> allows to replace the actual job commanline at a given location.</p>
+<p>This config variable has appeared in Soma-Workflow 2.10.</p>
+<p>Let’s take a simple example first:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">container_command</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;singularity&#39;</span><span class="p">,</span> <span class="s1">&#39;exec&#39;</span><span class="p">,</span> <span class="s1">&#39;--bind&#39;</span><span class="p">,</span> <span class="s1">&#39;/data_dir&#39;</span><span class="p">,</span> <span class="s1">&#39;--bind&#39;</span><span class="p">,</span> <span class="s1">&#39;/software_dir&#39;</span><span class="p">,</span> <span class="s1">&#39;/opt/singularity_images/appropriate_image.simg&#39;</span><span class="p">,</span> <span class="s1">&#39;entrypoint&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Here, the job command will be appended after the <code class="docutils literal notranslate"><span class="pre">entrypoint</span></code> program (if defined in the container image) which will run inside <em>singularity</em>. Let’s suppose the job commandline is <code class="docutils literal notranslate"><span class="pre">['ls',</span> <span class="pre">'/']</span></code>, the command which will be actually run is:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>singularity <span class="nb">exec</span> --bind /data_dir --bind /software_dir /opt/singularity_images/appropriate_image.simg entrypoint ls /
+</pre></div>
+</div>
+<p>Now if we need further customization, for instance to set a library path variable to access a library with custom installation, we will need to run a shell to setup the variable then run the program:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sh -c <span class="s1">&#39;LD_LIBRARY_PATH=/software_dir/lib:$&quot;LD_LIBRARY_PATH&quot; ls /&#39;</span>
+</pre></div>
+</div>
+<p>Here the job command with arguments must be within the <code class="docutils literal notranslate"><span class="pre">'</span></code> quotes after <code class="docutils literal notranslate"><span class="pre">sh</span> <span class="pre">-c</span></code> to run in the shell command. Then the <strong>CONTAINER_COMMAND</strong> variable for Soma-Workflow has to be:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">container_command</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;singularity&#39;</span><span class="p">,</span> <span class="s1">&#39;exec&#39;</span><span class="p">,</span> <span class="s1">&#39;--bind&#39;</span><span class="p">,</span> <span class="s1">&#39;/data_dir&#39;</span><span class="p">,</span> <span class="s1">&#39;--bind&#39;</span><span class="p">,</span> <span class="s1">&#39;/software_dir&#39;</span><span class="p">,</span> <span class="s1">&#39;/opt/singularity_images/appropriate_image.simg&#39;</span><span class="p">,</span> <span class="s1">&#39;sh&#39;</span><span class="p">,</span> <span class="s1">&#39;-c&#39;</span><span class="p">,</span> <span class="s1">&#39;LD_LIBRARY_PATH=&quot;/ software_dir/lib:$LD_LIBRARY_PATH&quot; entrypoint {#command}&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>This variable, being set only on server-side, allows to run workflows not aware of any container system on the computing resource, and can be set differently (or not set) on different computing resources.</p>
+<p><strong>BrainVisa containers case (casa-distro releases)</strong>: Starting with <a class="reference external" href="../../web-5.0/index.html">BrainVisa 5.0</a>, BrainVisa is distributed as Singularity virtual containers. The installation setup provides a command <code class="docutils literal notranslate"><span class="pre">bv</span></code>, which takes care of all options to call the container. Thus the <code class="docutils literal notranslate"><span class="pre">CONTAINER_COMMAND</span></code> here could just be:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">container_command</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;/home/johndoe/brainvisa/bin/bv&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>See also <a class="reference internal" href="#containerized-soma-workflow"><span class="std std-ref">Running servers and jobs in a container</span></a>.</p>
+</dd>
+</dl>
+</div></blockquote>
+<p>Logging configuration:</p>
+<blockquote>
+<div><dl class="simple">
+<dt><strong>SERVER_LOG_FILE</strong></dt><dd><p>Server log file path.</p>
+</dd>
+<dt><strong>SERVER_LOG_LEVEL</strong></dt><dd><p>Server logging level as defined in the <a class="reference external" href="http://docs.python.org/library/logging.html">logging</a> module.</p>
+</dd>
+<dt><strong>SERVER_LOG_FORMAT</strong></dt><dd><p>Server logging format as defined in the <a class="reference external" href="http://docs.python.org/library/logging.html">logging</a> module.</p>
+</dd>
+<dt><strong>ENGINE_LOG_DIR</strong></dt><dd><p>Directory path where to store Workflow Engine log files.</p>
+</dd>
+<dt><strong>ENGINE_LOG_LEVEL</strong></dt><dd><p>Workflow Engine logging level as defined in the <a class="reference external" href="http://docs.python.org/library/logging.html">logging</a> module.</p>
+</dd>
+<dt><strong>ENGINE_LOG_FORMAT</strong></dt><dd><p>Workflow Engine logging level as defined in the <a class="reference external" href="http://docs.python.org/library/logging.html">logging</a> module.</p>
+</dd>
+</dl>
+</div></blockquote>
+</div>
+<div class="section" id="parallel-job-configuration">
+<h4>Parallel job configuration:<a class="headerlink" href="#parallel-job-configuration" title="Permalink to this headline">¶</a></h4>
+<p>The items described here concern the parallel job configuration. A parallel job
+uses several CPUs and involves parallel code: MPI, OpenMP for example.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The documentation is under construction.</p>
+</div>
+</div>
+<div class="section" id="obsolete-config-entries">
+<h4>Obsolete config entries<a class="headerlink" href="#obsolete-config-entries" title="Permalink to this headline">¶</a></h4>
+<p><strong>NAME_SERVER_HOST</strong> removed in v3, this was for the Pyro name server.</p>
+</div>
+</div>
+</div>
+<div class="section" id="mono-process-application-on-clusters">
+<span id="light-mode-config"></span><h2><a class="toc-backref" href="#id18">Mono process application on clusters</a><a class="headerlink" href="#mono-process-application-on-clusters" title="Permalink to this headline">¶</a></h2>
+<p>This mode is called light mode, it is the installation you need if you are
+not interested in the remote access and disconnection features (see <a class="reference internal" href="concepts.html#client-server-application-concept"><span class="std std-ref">More features with the client-server application</span></a>)</p>
+<div class="section" id="id7">
+<h3>Requirements<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
+<p>The requirements are identical to the server installation requirements.
+If you do not intend to access an other computing resource with the remote
+access feature, the installation of zmq can be skipped.</p>
+<p>The requirements are thus:</p>
+<ul class="simple">
+<li><p>A distributed resource management system (DRMS) such as Grid Engine, Condor,
+Torque/PBS, LSF..</p></li>
+<li><p>A implementation of <a class="reference external" href="http://www.drmaa.org/">DRMAA</a> 1.0 for the DRMS in C if available, unless a specific <a class="reference internal" href="scheduler.html"><span class="doc">scheduler exists</span></a></p></li>
+<li><p>Python <em>version 2.7 or more</em></p></li>
+<li><p>SQLite <em>version 3 or more</em></p></li>
+<li><p>For the GUI: Qt <em>version 4.6.2 or more</em>, <a class="reference external" href="http://www.riverbankcomputing.co.uk/software/pyqt/intro">PyQt</a> <em>version 4.7.2 or more</em>, or <a class="reference external" href="http://www.pyside.org">PySide</a> <em>version 1.1.1</em> or more, and optionally <a class="reference external" href="http://matplotlib.sourceforge.net/">matplotlib</a> <em>version 0.99 or more</em></p></li>
+</ul>
+<p>More details about the implementation of DRMAA can be found in the server
+installation section (see <a class="reference internal" href="#server-requirements"><span class="std std-ref">Requirements</span></a>).</p>
+</div>
+<div class="section" id="id12">
+<h3>Installation<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h3>
+<ol class="arabic simple">
+<li><p>Choose a resource identifier for the computing resource, ex: “Local Titan”</p></li>
+<li><p>Create a configuration file (see <a class="reference internal" href="#light-mode-configuration"><span class="std std-ref">Configuration</span></a>) at the location $HOME/.soma-workflow.cfg. You can also choose your own path for the configuration file and set the “SOMA_WORKFLOW_CONFIG” environment variable with this path or put it in the /etc/ directory.</p></li>
+</ol>
+<p>Start the GUI with the command <em>soma_workflow_gui</em> and/or import the soma.workflow.client module to use the Python API.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="gui.html#gui"><span class="std std-ref">Graphical User Interface</span></a> for the GUI documentation, <a class="reference internal" href="client_API.html#client-api"><span class="std std-ref">Python API</span></a> for Soma-workflow Python API documentation and <a class="reference internal" href="examples.html#examples"><span class="std std-ref">Examples</span></a>.</p>
+</div>
+</div>
+<div class="section" id="configuration">
+<span id="light-mode-configuration"></span><h3>Configuration<a class="headerlink" href="#configuration" title="Permalink to this headline">¶</a></h3>
+<p>This section defines the required and optional configuration items for the light
+mode.</p>
+<p>The configuration file syntax is the <a class="reference external" href="http://docs.python.org/library/configparser.html">ConfigParser</a>  syntax. All the
+configuration items are defined in one section. The section name corresponds to
+the name you chose for the resource: “Local Titan” in the example.</p>
+<p>Configuration file example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">Local</span> <span class="n">Titan</span><span class="p">]</span>
+
+<span class="n">LIGHT_MODE</span>    <span class="o">=</span> <span class="kc">True</span>
+
+<span class="n">TRANSFERED_FILE_DIR</span> <span class="o">=</span> <span class="n">path</span><span class="o">/</span><span class="n">soma_workflow</span><span class="o">.</span><span class="n">db</span>
+<span class="n">DATABASE_FILE</span>       <span class="o">=</span> <span class="n">path</span><span class="o">/</span><span class="n">transfered_files</span>
+</pre></div>
+</div>
+<p><em>Required configuration items:</em></p>
+<blockquote>
+<div><dl>
+<dt><strong>LIGHT_MODE</strong></dt><dd><p>This item can be set up with any value, however it must be defined to use
+soma_workflow in the light mode.</p>
+</dd>
+<dt><strong>TRANSFERED_FILE_DIR</strong></dt><dd><p>Path of the directory where the transfered files will be copied. The
+directory must be empty and will be managed entirely by Soma-workflow.
+This item is required to let you run workflow with file transfer for
+test purposes in the light mode.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Do not copy any file in this directory. Soma_workflow manages the
+entire directory and might delete any external file.</p>
+</div>
+</dd>
+</dl>
+</div></blockquote>
+<p><em>Optional configuration items:</em></p>
+<blockquote>
+<div><p>Many optional configuration item can be added to customize the installation, see
+<a class="reference internal" href="#server-configuration"><span class="std std-ref">Server configuration (Created automatically)</span></a> for a full list of the items and their description.</p>
+<p>In addition, a few more optional configuration items are available:</p>
+<dl>
+<dt><strong>DATABASE_FILE</strong></dt><dd><p>Path of the SQLite database file. The file will be created the first time
+the application is launch.</p>
+<p>This option was mandatory up to soma-workflow-2.6, and is optional since
+2.7. Additionally in 2.7, the database version number will be appended to
+the database file name, to avoid mixing several incompatible databases when
+switching between different soma-workflow versions.</p>
+</dd>
+<dt><strong>SOMA_WORKFLOW_DIR</strong> (new in 2.7)</dt><dd><p>Directory which will contain soma_workflow files (typically, the SQlite
+database, and file transfers).</p>
+</dd>
+</dl>
+<p>In addition <a class="reference internal" href="#local-sched-config"><span class="std std-ref">Local scheduler options</span></a> can be used in the configuration: <strong>CPU_NB</strong>, <strong>MAX_CPU_NB</strong>, and <strong>SCHEDULER_INTERVAL</strong>.</p>
+</div></blockquote>
+</div>
+</div>
+<div class="section" id="running-servers-and-jobs-in-a-container">
+<span id="containerized-soma-workflow"></span><h2><a class="toc-backref" href="#id19">Running servers and jobs in a container</a><a class="headerlink" href="#running-servers-and-jobs-in-a-container" title="Permalink to this headline">¶</a></h2>
+<p>When Soma-Workflow is installed as part of the <a class="reference external" href="../../web-5.0/index.html">BrainVISA distribution</a>, it now runs inside a container or a virtual machine. Users thus would need to run the Soma-Workflow servers in such a container, and run jobs also in the container.</p>
+<p>There are two main use cases:</p>
+<div class="section" id="local-execution">
+<h3>Local execution<a class="headerlink" href="#local-execution" title="Permalink to this headline">¶</a></h3>
+<p><strong>It runs transparently out of the box.</strong></p>
+<p>This mode is using the local machine (and system) to run processing in parallel. As the client and the scheduing is run from a container or virtual machine, processing will also run in the same system (or say, subsystem), this means in the same container or virtual machine, and thus will get access to all BrainVISA distribution software.</p>
+</div>
+<div class="section" id="remote-execution">
+<h3>Remote execution<a class="headerlink" href="#remote-execution" title="Permalink to this headline">¶</a></h3>
+<p>Remote execution means that the client will connect to a remote machine (a cluster typically) and run jobs remotely. The remote computing resource thus needs to have the software installed. This software installation is in two parts:</p>
+<ul class="simple">
+<li><p>The soma-workflow server needs to be installed on the cluster front-end machine (the one you connect via <code class="docutils literal notranslate"><span class="pre">ssh</span></code> to run jobs).</p></li>
+<li><p>software need to be installed on the computing nodes which actually run the jobs. This may include BrainVISA software, and external software used by it (such as SPM, FSL, Freesurfer).</p></li>
+</ul>
+<p>In most cases, the front-end machine and cluster nodes share a filesystem where you can install the software, thus you can install the BrainVISA distribution just once on this shared filesystem.</p>
+<p>Programs will be run from cluster jobs, so the virtual machine distribution of BrainVISA is generally not the most convenient: VMs have to be started first, then programs have to be called inside them. Well it’s possible but not the easiest to setup.</p>
+<p>The container system based on <a class="reference external" href="https://sylabs.io/singularity/">Singularity</a> allows to run jobs in the most convenient way. Singularity needs to be installed on the cluster nodes. Installing it requires some admin permissions, so you will have to contact the cluster admins, but once installed it doesn’t require special permissions, any user can run it (contrarily to Docker).</p>
+<p>Once the software is installed, we need to use it the right way. There are 2 different places to be configured: the Soma-Workflow server, and the software for computing jobs.</p>
+<ul>
+<li><p>Soma-workflow server needs to be called remotely from the client. When the client connects via <code class="docutils literal notranslate"><span class="pre">ssh</span></code>, it runs the server as Python modules on the cluser front-end. There are 3 ways to make them available:</p>
+<ul class="simple">
+<li><p>run the server inside the container. In this situation the server config files <code class="docutils literal notranslate"><span class="pre">$HOME/.soma-workflow.cfg</span></code> should be in the container home directory. To start it inside the container, the client configuration has to contain the <a class="reference internal" href="#python-command-option"><span class="std std-ref">PYTHON_COMMAND option</span></a>, which will specify how to call it. Typically, if the front-end server (host) machine has been configured to contain the BrainVisa installation <code class="docutils literal notranslate"><span class="pre">bin/</span></code> directory (see <a class="reference external" href="../../web-5.0/download.html">install instructions</a>), calling <code class="docutils literal notranslate"><span class="pre">bv</span> <span class="pre">python</span></code> instead of <code class="docutils literal notranslate"><span class="pre">python</span></code> will be OK. Otherwise using the full path th <code class="docutils literal notranslate"><span class="pre">bv</span></code> is also OK.</p></li>
+<li><p>If the cluster front-end (generally a Unix / Linux system) has Python installed, with the required modules (PyZMQ mainly) and can run the server natively: setting the <code class="docutils literal notranslate"><span class="pre">PYTONPATH</span></code> environment variable in a config file (<code class="docutils literal notranslate"><span class="pre">$HOME/.bash_profile</span></code> or <code class="docutils literal notranslate"><span class="pre">$HOME/.bashrc</span></code> if you are using a bash-like shell) to the python directory containing Soma-Workflow should be OK. In a singularity image the files are not seen from the host system, thus a “read-write install” may be required.</p></li>
+<li><p>Like above, running natively on the front-end machine, but using Soma-Workflow sources: clone them from <a class="reference external" href="https://github.com/populse/soma-workflow">https://github.com/populse/soma-workflow</a> and set the <code class="docutils literal notranslate"><span class="pre">PYTONPATH</span></code> environment variable to point to it.</p></li>
+</ul>
+</li>
+<li><p>To run jobs inside the container,</p>
+<ul>
+<li><p>either the <code class="docutils literal notranslate"><span class="pre">bin</span></code> directory of the BrainVISA installation directory is in the user <code class="docutils literal notranslate"><span class="pre">PATH</span></code> in the cluster nodes: then commands will be transparently redirected to the container. Nothing more has to be done (maybe the brainvisa container config to define mount point etc, but nothing specific to soma-workflow).</p></li>
+<li><p>Or the option <a class="reference internal" href="#container-command"><span class="std std-ref">CONTAINER_COMMAND</span></a> may be used, to specify the indirection, typically:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">container_command</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;/home/johndoe/brainvisa/bin/bv&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="server-configuration-examples">
+<h2><a class="toc-backref" href="#id20">Server configuration examples</a><a class="headerlink" href="#server-configuration-examples" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="local-mode-on-a-server-with-client-server-access">
+<h3>Local mode on a server, with client/server access<a class="headerlink" href="#local-mode-on-a-server-with-client-server-access" title="Permalink to this headline">¶</a></h3>
+<p>This mode allows remote access from a client to a computing server which does not have any DRMS and is using Soma-Workflow’s local (simple) scheduler.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>It is better not to use the local scheduler on machines shared between several users, as this basic scheduler does not handle inter-user load very well.</p>
+</div>
+<p>Server configuratinon (<code class="docutils literal notranslate"><span class="pre">$HOME/.soma-workflow.cfg</span></code>):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">averell</span><span class="p">]</span>
+
+<span class="n">CLUSTER_ADDRESS</span>     <span class="o">=</span> <span class="n">averell</span><span class="o">.</span><span class="n">mylab</span><span class="o">.</span><span class="n">fr</span>
+<span class="n">SUBMITTING_MACHINES</span> <span class="o">=</span> <span class="n">averell</span><span class="o">.</span><span class="n">mylab</span><span class="o">.</span><span class="n">fr</span>
+<span class="n">LOGIN</span> <span class="o">=</span> <span class="n">my_login</span>
+<span class="n">SCHEDULER_TYPE</span> <span class="o">=</span> <span class="n">local_basic</span>
+<span class="n">SERVER_NAME</span> <span class="o">=</span> <span class="n">averell</span>
+<span class="n">ENGINE_LOG_DIR</span> <span class="o">=</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">my_login</span><span class="o">/.</span><span class="n">soma_workflow</span><span class="o">/</span><span class="n">averell</span><span class="o">/</span><span class="n">logs</span>
+<span class="n">TRANSFERED_FILE_DIR</span> <span class="o">=</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">my_login</span><span class="o">/.</span><span class="n">soma_workflow</span><span class="o">/</span><span class="n">averell</span><span class="o">/</span><span class="n">file_transfers</span>
+<span class="n">DATABASE_FILE</span> <span class="o">=</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">my_login</span><span class="o">/.</span><span class="n">soma_workflow</span><span class="o">/</span><span class="n">averell</span><span class="o">/</span><span class="n">soma_workflow</span><span class="o">.</span><span class="n">db</span>
+</pre></div>
+</div>
+<p id="local-sched-config">The local scheduler also uses its own config file (<code class="docutils literal notranslate"><span class="pre">$HOME/.soma-workflow-scheduler.cfg</span></code>):</p>
+<p>The scheduler options are:</p>
+<blockquote>
+<div><dl>
+<dt><strong>CPU_NB</strong></dt><dd><p>Number of CPU cores to be used.
+May be 0.
+From Soma-workflow 2.8, this number is not a maximum any longer, but rather a minimum. See MAX_CPU_NB.</p>
+</dd>
+<dt><strong>MAX_CPU_NB</strong> (new in 2.8)</dt><dd><p>Maximum number of CPU cores to be used.
+0 means all processors detected on the machine.
+The number of processors used (provided there are enough jobs to feed them) is at least CPU_NB, and at most MAX_CPU_NB, depending on the machine load at the time of job submission.
+This load adjustment allows to use soma-workflow on a shared machine using the local scheduler. However this load adjustment is not an advanced load balancing feature, it is a cheap solution to avoid heavy overloading, but it is very limited and approximative.</p>
+<p>When not specified (or zero), the number of available cores will be used as max, and 0 as cpu_nb.</p>
+</dd>
+<dt><strong>SCHEDULER_INTERVAL</strong></dt><dd><p>Polling interval for the scheduler, in seconds. The default is 1 second.</p>
+</dd>
+</dl>
+</div></blockquote>
+<p>Ex:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">averell</span><span class="p">]</span>
+
+<span class="n">CPU_NB</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">MAX_CPU_NB</span> <span class="o">=</span> <span class="mi">16</span>
+<span class="n">SCHEDULER_INTERVAL</span> <span class="o">=</span> <span class="mi">1</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/logo_white_small.png" alt="Logo"/>
+            </a></p>
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Installation and configuration</a><ul>
+<li><a class="reference internal" href="#mono-process-application-on-a-multiple-core-machine">Mono process application on a multiple core machine</a></li>
+<li><a class="reference internal" href="#client-server-application-client">Client-server application: Client</a><ul>
+<li><a class="reference internal" href="#requirements">Requirements</a></li>
+<li><a class="reference internal" href="#installation">Installation</a></li>
+<li><a class="reference internal" href="#configuration-created-automatically">Configuration (Created automatically)</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#client-server-application-server">Client-server application: Server</a><ul>
+<li><a class="reference internal" href="#server-requirements">Requirements</a></li>
+<li><a class="reference internal" href="#server-installation-using-server-management">Server installation using “Server Management”</a></li>
+<li><a class="reference internal" href="#server-configuration-created-automatically">Server configuration (Created automatically)</a><ul>
+<li><a class="reference internal" href="#configuration-items-required-on-the-server-side">Configuration items required on the server side:</a></li>
+<li><a class="reference internal" href="#configuration-items-optional-on-the-server-side">Configuration items optional on the server side:</a></li>
+<li><a class="reference internal" href="#parallel-job-configuration">Parallel job configuration:</a></li>
+<li><a class="reference internal" href="#obsolete-config-entries">Obsolete config entries</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#mono-process-application-on-clusters">Mono process application on clusters</a><ul>
+<li><a class="reference internal" href="#id7">Requirements</a></li>
+<li><a class="reference internal" href="#id12">Installation</a></li>
+<li><a class="reference internal" href="#configuration">Configuration</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#running-servers-and-jobs-in-a-container">Running servers and jobs in a container</a><ul>
+<li><a class="reference internal" href="#local-execution">Local execution</a></li>
+<li><a class="reference internal" href="#remote-execution">Remote execution</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#server-configuration-examples">Server configuration examples</a><ul>
+<li><a class="reference internal" href="#local-mode-on-a-server-with-client-server-access">Local mode on a server, with client/server access</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="scheduler.html"
+                        title="previous chapter">Supporting new computing resources: writing a Scheduler implementation</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="changelog.html"
+                        title="next chapter">Changelog</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/install_config.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="changelog.html" title="Changelog"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="scheduler.html" title="Supporting new computing resources: writing a Scheduler implementation"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">soma-workflow version 3.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Installation and configuration</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2011-2021 CEA, Neurospin, France, CATI, France.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

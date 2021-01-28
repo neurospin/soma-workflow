@@ -1,0 +1,199 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>errors &#8212; soma-workflow version 3.1 documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="shortcut icon" href="../_static/icon_small.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">soma-workflow version 3.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">errors</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for errors</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">@author: Soizic Laguitton</span>
+
+<span class="sd">@organization: I2BM, Neurospin, Gif-sur-Yvette, France</span>
+<span class="sd">@organization: CATI, France</span>
+
+<span class="sd">@license: `CeCILL B &lt;http://www.cecill.info/licences/Licence_CeCILL_B-en.html`_</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+
+<span class="k">class</span> <span class="nc">SomaWorkflowError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Wrong usage of Soma-workflow.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">pass</span>
+
+
+<div class="viewcode-block" id="ConfigurationError"><a class="viewcode-back" href="../errors_troubleshooting.html#errors.ConfigurationError">[docs]</a><span class="k">class</span> <span class="nc">ConfigurationError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Raised when the configuration is not correct or when configuration</span>
+<span class="sd">    items are missing.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="ConnectionError"><a class="viewcode-back" href="../errors_troubleshooting.html#errors.ConnectionError">[docs]</a><span class="k">class</span> <span class="nc">ConnectionError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Raised when the connection could not be set up with the computing</span>
+<span class="sd">    resource and/or the database server.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="DRMError"><a class="viewcode-back" href="../errors_troubleshooting.html#errors.DRMError">[docs]</a><span class="k">class</span> <span class="nc">DRMError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    DRMAA session error or DRMS error.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="JobError"><a class="viewcode-back" href="../errors_troubleshooting.html#errors.JobError">[docs]</a><span class="k">class</span> <span class="nc">JobError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Raised when an incorrect Job is submitted to soma-workflow.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="WorkflowError"><a class="viewcode-back" href="../errors_troubleshooting.html#errors.WorkflowError">[docs]</a><span class="k">class</span> <span class="nc">WorkflowError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Raised when an incorrect Workflow is submitted to soma-workflow.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="TransferError"><a class="viewcode-back" href="../errors_troubleshooting.html#errors.TransferError">[docs]</a><span class="k">class</span> <span class="nc">TransferError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Raised when an incorrect Transfer is submitted to soma_workflow, or when an error occurs during a file transfer.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="UnknownObjectError"><a class="viewcode-back" href="../errors_troubleshooting.html#errors.UnknownObjectError">[docs]</a><span class="k">class</span> <span class="nc">UnknownObjectError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Raised when an operation is attempted on Jobs, Workflows or Transfers which</span>
+<span class="sd">    do not exist or do not belong to the user.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="EngineError"><a class="viewcode-back" href="../errors_troubleshooting.html#errors.EngineError">[docs]</a><span class="k">class</span> <span class="nc">EngineError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Raised if an error occurs while starting the workflow engine.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="DatabaseError"><a class="viewcode-back" href="../errors_troubleshooting.html#errors.DatabaseError">[docs]</a><span class="k">class</span> <span class="nc">DatabaseError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Raised if an error occurs while reading or writing to the database.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">pass</span></div>
+
+
+<span class="k">class</span> <span class="nc">SerializationError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+
+<span class="k">class</span> <span class="nc">NoDrmaaLibError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Raised if no drmaa libary is found</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">pass</span>
+
+
+<span class="k">class</span> <span class="nc">ExitTimeoutException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Raised if a DRMS command reaches a timeout before returning</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">pass</span>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/logo_white_small.png" alt="Logo"/>
+            </a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">soma-workflow version 3.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">errors</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2011-2021 CEA, Neurospin, France, CATI, France.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

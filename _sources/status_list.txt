@@ -1,0 +1,245 @@
+.. _status_list:
+
+===========
+Status list
+===========
+
+Once submitted to Soma-workflow, the jobs, workflows and file transfers are 
+associated to statuses which reflect their states in the system. Here is the 
+list of possible statuses for each class of objects.
+
+.. _job-status:
+
+Job status 
+==========
+
+Here is the list of the job statuses and the associated icons displayed in the GUI.
+
+  |no_status| **not_submitted**
+    The job was not submitted yet to soma-workflow.
+
+  |undeter| **undetermined**
+    Transitive status. The job status is changing and will be updated soon.
+
+  |pending| **submission_pending**
+    Due to a limitation of the number of job in the queue (see :ref:`conf_server_option`), the job is 
+    waiting to be submitted to the DRMS.
+  
+  |queued| **queued_active**
+    The job was submitted to the DRMS and is currently waiting in the queue.
+  
+  |running| **running**
+    The job is running on the computing resource.
+
+  |success| or |failed| **done**
+    The job finished normally. However it does not mean that it ended with 
+    success (see :ref:`job-exit-status`).
+
+  |failed| **failed**
+    The job exited abnormally before finishing.
+
+  |warning| **warning**
+    The workflow engine process in charge of the monitoring of the job status
+    was killed or failed. The job or the workflow containing the job has to be 
+    stopped and restarted.
+
+  **delete_pending**    
+    Transitive status. The job will be deleted soon.
+
+  **kill_pending**       
+    Transitive status. The job will be killed soon.
+    
+..
+  system_on_hold
+  user_on_hold
+  user_system_on_hold
+  system_suspended
+  user_suspended
+  user_system_suspended
+
+
+.. _job-exit-status:
+
+Job exit status
+===============  
+
+  **finished_regularly**
+    The job finished regularly. The exit value is displayed in the GUI and is 
+    available from the Python API. If the value is different from 0 
+    Soma-workflow considers that the job failed.
+
+  **finished_signal**
+    The job finished due to a signal. The signal is displayed on the GUI and 
+    is available from the python API (depending on DRMAA implementation).
+
+  **killed_by_user**
+     The job was killed by the user.
+
+  **aborted**
+    The job never ran.
+
+  **exit_status_undetermined**
+    The exit status can not be determined.
+
+..
+  **finished_unclear_condition**
+    The job finished with unclear conditions.
+
+
+.. _workflow-status:
+
+Workflow status
+===============
+
+  |no_status| **worklflow_not_started**
+    The workflow was not submitted to Soma-workflow.
+  
+  |running| **workflow_in_progress**
+    The workflow was submitted to Soma-workflow.
+
+  |done| **workflow_done**
+    The workflow is done.
+
+  **delete_pending**
+    Transitive status. The workflow will be deleted soon.
+
+  |warning| **warning**
+    The workflow engine process in charge of the workflow execution was killed 
+    or failed on the computing resource side. The workflow has to be stopped and 
+    restarted (the jobs which ended with success will not be restarted).
+
+
+.. note::
+  |warning| In case of warning status a simple solution is to stop and 
+  restart the workflow. 
+  The job which ended with success will not be restarted.
+
+  However, the warning status does not mean that the jobs failed. In case of very 
+  long jobs, you can check yourself the status of the job(s) on the DRMS and 
+  choose to stop the jobs from the DRMS or not.
+
+
+.. _file-transfer-status:
+
+File Transfer status
+====================
+
+  |tr_dont_exist| **do not exist**
+    The file(s) do not exist. For example: output files at the beginning of a
+    workflow execution.
+
+  |tr_on_c| **on client side**
+    The file(s) exist on the client side only. For example: input files.
+
+  |tr_on_cr| **on computing resource side**
+    The file(s) exist on the computing resource side only. For example: output
+    files after the end of a job.
+
+  |tr_on_both| **on both sides**
+    The file(s) exist both on the client and computing resource side. For example:
+    A transfer ended.  
+
+  |tr_c_to_cr| **transfering client->cr**
+    The file(s) are being transfered form the client to the computing resource.
+
+  |tr_cr_to_c| **transfering cr->client**
+    The file(s) are being transfered from the computing resource to the client.
+
+..
+  |under_edition| **under edition**
+    The file(s) are under edition, they are output and/or input of a running 
+    job.
+
+
+
+.. |no_status| image:: ../../python/soma_workflow/gui/icon/no_status.png
+               :height: 100 px
+               :width: 100 px
+               :scale: 30 
+
+.. |undeter|   image:: ../../python/soma_workflow/gui/icon/undetermined.png
+               :height: 100 px
+               :width: 100 px
+               :scale: 30 
+
+.. |queued|    image:: ../../python/soma_workflow/gui/icon/queued.png
+               :height: 100 px
+               :width: 100 px
+               :scale: 30 
+
+.. |running|   image:: ../../python/soma_workflow/gui/icon/running.png
+               :height: 100 px
+               :width: 100 px
+               :scale: 30 
+
+.. |success|   image:: ../../python/soma_workflow/gui/icon/success.png
+               :height: 100 px
+               :width: 100 px
+               :scale: 30 
+
+.. |kd_pending| image:: ../../python/soma_workflow/gui/icon/kill_delete_pending.png
+                    :height: 100 px
+                    :width: 100 px
+                    :scale: 30 
+
+.. |warning| image:: ../../python/soma_workflow/gui/icon/warning.png
+            :height: 100 px
+            :width: 100 px
+            :scale: 30 
+
+.. |failed| image:: ../../python/soma_workflow/gui/icon/failed.png
+            :height: 100 px
+            :width: 100 px
+            :scale: 30 
+
+.. |pending| image:: ../../python/soma_workflow/gui/icon/pending.png
+            :height: 100 px
+            :width: 100 px
+            :scale: 30 
+
+
+.. |done| image:: ../../python/soma_workflow/gui/icon/done.png
+            :height: 100 px
+            :width: 100 px
+            :scale: 30 
+            
+
+.. |tr_dont_exist| image:: ../../python/soma_workflow/gui/icon/transfer_files_dont_exist.png
+                  :height: 100 px
+                  :width: 100 px
+                  :scale: 30 
+
+.. |tr_on_c| image:: ../../python/soma_workflow/gui/icon/transfer_files_on_client.png
+                  :height: 100 px
+                  :width: 100 px
+                  :scale: 30
+
+.. |tr_on_both| image:: ../../python/soma_workflow/gui/icon/transfer_files_on_both.png
+                  :height: 100 px
+                  :width: 100 px
+                  :scale: 30
+
+
+.. |tr_on_cr| image:: ../../python/soma_workflow/gui/icon/transfer_files_on_cr.png
+                  :height: 100 px
+                  :width: 100 px
+                  :scale: 30
+
+.. |tr_cr_to_c| image:: ../../python/soma_workflow/gui/icon/transfering_from_cr_to_client.png
+                  :height: 100 px
+                  :width: 100 px
+                  :scale: 30
+
+.. |tr_c_to_cr| image:: ../../python/soma_workflow/gui/icon/transfering_from_client_to_cr.png
+                  :height: 100 px
+                  :width: 100 px
+                  :scale: 30
+
+.. |under_edition| image:: ../../python/soma_workflow/gui/icon/files_under_edition.png
+                  :height: 100 px
+                  :width: 100 px
+                  :scale: 30
+
+
+
+

@@ -1,0 +1,1480 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Workflow creation API &#8212; soma-workflow version 3.1 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    
+    <link rel="shortcut icon" href="_static/icon_small.ico"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Python API" href="client_API.html" />
+    <link rel="prev" title="Status list" href="status_list.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="client_API.html" title="Python API"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="status_list.html" title="Status list"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">soma-workflow version 3.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Workflow creation API</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="workflow-creation-api">
+<span id="id1"></span><h1>Workflow creation API<a class="headerlink" href="#workflow-creation-api" title="Permalink to this headline">¶</a></h1>
+<div class="contents local topic" id="id2">
+<p class="topic-title">Workflow creation API</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#workflow" id="id3">Workflow</a></p></li>
+<li><p><a class="reference internal" href="#group" id="id4">Group</a></p></li>
+<li><p><a class="reference internal" href="#job" id="id5">Job</a></p></li>
+<li><p><a class="reference internal" href="#filetransfer" id="id6">FileTransfer</a></p></li>
+<li><p><a class="reference internal" href="#sharedresourcepath" id="id7">SharedResourcePath</a></p></li>
+<li><p><a class="reference internal" href="#temporarypath" id="id8">TemporaryPath</a></p></li>
+<li><p><a class="reference internal" href="#dynamic-output-parameters-values-in-soma-workflow" id="id9">Dynamic output parameters values in Soma-Workflow</a></p>
+<ul>
+<li><p><a class="reference internal" href="#using-dynamic-output-parameters" id="id10">Using dynamic output parameters</a></p></li>
+<li><p><a class="reference internal" href="#dynamic-outputs-and-file-transfers" id="id11">Dynamic outputs and file transfers</a></p></li>
+<li><p><a class="reference internal" href="#job-input-parameters-as-file" id="id12">Job input parameters as file</a></p></li>
+<li><p><a class="reference internal" href="#parameters-link-functions" id="id13">Parameters link functions</a></p>
+<ul>
+<li><p><a class="reference internal" href="#module-param_link_functions" id="id14">param_link_functions module</a></p></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#jobs-with-configuration" id="id15">Jobs with configuration</a></p></li>
+<li><p><a class="reference internal" href="#engine-execution-jobs" id="id16">Engine execution jobs</a></p></li>
+</ul>
+</div>
+<p>The workflows are created using the soma_workflow.client API. This page presents
+the documentation of the Workflow, Job, FileTransfer and SharedResourcePath
+classes.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="examples.html#examples"><span class="std std-ref">Examples</span></a> for a quick start.</p>
+</div>
+<div class="section" id="workflow">
+<h2><a class="toc-backref" href="#id3">Workflow</a><a class="headerlink" href="#workflow" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="client.Workflow">
+<em class="property">class </em><code class="sig-prename descclassname">client.</code><code class="sig-name descname">Workflow</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">jobs</span></em>, <em class="sig-param"><span class="n">dependencies</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">root_group</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">disposal_timeout</span><span class="o">=</span><span class="default_value">168</span></em>, <em class="sig-param"><span class="n">user_storage</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">env</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">env_builder_code</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">param_links</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/soma_workflow/client_types.html#Workflow"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#client.Workflow" title="Permalink to this definition">¶</a></dt>
+<dd><p>Workflow representation.</p>
+<dl class="py attribute">
+<dt id="client.Workflow.name">
+<code class="sig-name descname">name</code><a class="headerlink" href="#client.Workflow.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Name of the workflow which will be displayed in the GUI.
+Default: workflow_id once submitted</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="client.Workflow.jobs">
+<code class="sig-name descname">jobs</code><a class="headerlink" href="#client.Workflow.jobs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Workflow jobs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>sequence of Job</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="client.Workflow.dependencies">
+<code class="sig-name descname">dependencies</code><a class="headerlink" href="#client.Workflow.dependencies" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dependencies between the jobs of the workflow.
+If a job_a needs to be executed before a job_b can run: the tuple
+(job_a, job_b) must be added to the workflow dependencies. job_a and job_b
+must belong to workflow.jobs.</p>
+<p>In Soma-Workflow 2.7 or higher, dependencies may use groups. In this case,
+dependencies are replaced internally to setup the groups jobs dependencies.
+2 additional barrier jobs (see BarrierJob) are used for each group.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>sequence of tuple (element, element), element being Job or <a class="reference internal" href="#client.Group" title="client.Group">Group</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="client.Workflow.root_group">
+<code class="sig-name descname">root_group</code><a class="headerlink" href="#client.Workflow.root_group" title="Permalink to this definition">¶</a></dt>
+<dd><p>Recursive description of the workflow hierarchical structure. For displaying
+purpose only.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>root_group is only used to display nicely the workflow in the GUI. It
+does not have any impact on the workflow execution.</p>
+<p>If root_group is not set, all the jobs of the workflow will be
+displayed at the root level in the GUI tree view.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><em>sequence of Job and/or Group</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="client.Workflow.user_storage">
+<code class="sig-name descname">user_storage</code><a class="headerlink" href="#client.Workflow.user_storage" title="Permalink to this definition">¶</a></dt>
+<dd><p>For the user needs, any small and picklable object can be stored here.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>picklable object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="client.Workflow.env">
+<code class="sig-name descname">env</code><a class="headerlink" href="#client.Workflow.env" title="Permalink to this definition">¶</a></dt>
+<dd><p>Environment variables to use when the job gets executed. The workflow-
+level env variables are set to all jobs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)">dict</a>(string, string)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="client.Workflow.env_builder_code">
+<code class="sig-name descname">env_builder_code</code><a class="headerlink" href="#client.Workflow.env_builder_code" title="Permalink to this definition">¶</a></dt>
+<dd><p>python source code. This code will be executed from the engine, on
+server side, but not in a processing node (in a separate python process
+in order not to pollute the engine process) when a workflow is
+starting. The code should print on the standard output a json
+dictionary of environment variables, which will be set into all jobs,
+in addition to the <em>env</em> variable above.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="client.Workflow.param_links">
+<code class="sig-name descname">param_links</code><a class="headerlink" href="#client.Workflow.param_links" title="Permalink to this definition">¶</a></dt>
+<dd><p>New in 3.1.
+Job parameters links. Links are in the following shape:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dest_job</span><span class="p">:</span> <span class="p">{</span><span class="n">dest_param</span><span class="p">:</span> <span class="p">[(</span><span class="n">source_job</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">function</span><span class="o">&gt;</span><span class="p">),</span> <span class="o">...</span><span class="p">]}</span>
+</pre></div>
+</div>
+<p>Links are used to get output values from jobs which have completed
+their run, and to set them into downstream jobs inputs. This system
+allows “dynamic outputs” in workflows.
+The optional function item is the name of a function that will be
+called to transform values from the source to the destination of the
+link at runtime. It is basically a string “module.function”, or a
+tuple for passing some arguments (as in partial):
+(“module.function”, 12, “param”). The function is called with
+additional arguments: parameter name, parameter value, destination
+parameter name, destination parameter current value. The destination
+parameter value is typically used to build / update a list in the
+destination job from a series of values in source jobs.</p>
+<p>See <a class="reference internal" href="#params-link-functions"><span class="std std-ref">Parameters link functions</span></a> for details.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)">dict</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<p>In Soma-Workflow 3.1, some “jobs outputs” have been added. This concept
+is somewhat contradictory with the commandline execution model, which
+basically does not produce outputs other than files. To handle this,
+jobs which actually produce “outputs” (names parameters with output
+values) should write a JSON file containing the output values
+dictionary.</p>
+<p>Output values are then read by Soma-Workflow, and values are set in the
+downstream jobs which depend on these values.</p>
+<p>For this, “parameters links” have been added, to tell Soma-Workflow
+which input parameters should be replaced by output parameter values
+from an upstream job.</p>
+<p>param_links is an (optional) dict which specifies these links:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="n">dest_job</span><span class="p">:</span> <span class="p">{</span><span class="n">dest_param</span><span class="p">:</span> <span class="p">[(</span><span class="n">source_job</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">function</span><span class="o">&gt;</span><span class="p">),</span> <span class="o">...</span><span class="p">]}}</span>
+</pre></div>
+</div>
+<p>Such links de facto define new jobs dependencies, which are added to
+the dependencies manually specified.</p>
+<p>The optional function item is the name of a function that will be
+called to transform values from the source to the destination of the
+link at runtime. It is basically a string “module.function”, or a
+tuple for passing some arguments (as in partial):
+(“module.function”, 12, “param”). The function is called with
+additional arguments: parameter name, parameter value, destination
+parameter name, destination parameter current value. The destination
+parameter value is typically used to build / update a list in the
+destination job from a series of values in source jobs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>jobs</strong> – </p></li>
+<li><p><strong>dependencies</strong> – </p></li>
+<li><p><strong>root_group</strong> – </p></li>
+<li><p><strong>disposal_timeout</strong> – </p></li>
+<li><p><strong>user_storage</strong> – </p></li>
+<li><p><strong>name</strong> – </p></li>
+<li><p><strong>env</strong> – </p></li>
+<li><p><strong>env_builder_code</strong> – </p></li>
+<li><p><strong>param_links</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="client.Workflow.add_dependencies">
+<code class="sig-name descname">add_dependencies</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dependencies</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/soma_workflow/client_types.html#Workflow.add_dependencies"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#client.Workflow.add_dependencies" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add additional dependencies in the workflow.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="client.Workflow.add_dependencies_from_links">
+<code class="sig-name descname">add_dependencies_from_links</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/soma_workflow/client_types.html#Workflow.add_dependencies_from_links"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#client.Workflow.add_dependencies_from_links" title="Permalink to this definition">¶</a></dt>
+<dd><p>Process parameters links and add missing jobs dependencies accordingly</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="client.Workflow.add_workflow">
+<code class="sig-name descname">add_workflow</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">workflow</span></em>, <em class="sig-param"><span class="n">as_group</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/soma_workflow/client_types.html#Workflow.add_workflow"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#client.Workflow.add_workflow" title="Permalink to this definition">¶</a></dt>
+<dd><p>Concatenates a workflow into the current one.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>workflow</strong> (<a class="reference internal" href="#client.Workflow" title="client.Workflow"><em>Workflow</em></a>) – workflow to be added to self</p></li>
+<li><p><strong>as_group</strong> (<em>string</em><em> (</em><em>optional</em><em>)</em>) – if specified, the workflow will be added as a group with the given
+name</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>if as_group is specified, the group created for the sub-workflow
+will be returned, otherwise the function returns None.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>group or <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.9)">None</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="client.Workflow.to_dict">
+<code class="sig-name descname">to_dict</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/soma_workflow/client_types.html#Workflow.to_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#client.Workflow.to_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>The keys must be string to serialize with JSON.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="group">
+<h2><a class="toc-backref" href="#id4">Group</a><a class="headerlink" href="#group" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="client.Group">
+<em class="property">class </em><code class="sig-prename descclassname">client.</code><code class="sig-name descname">Group</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">elements</span></em>, <em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">user_storage</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/soma_workflow/client_types.html#Group"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#client.Group" title="Permalink to this definition">¶</a></dt>
+<dd><p>Hierarchical structure of a workflow.</p>
+<dl class="simple">
+<dt><strong>elements</strong>: <em>sequence of Job and/or Group</em></dt><dd><p>The elements (Job or Group) belonging to the group.</p>
+</dd>
+<dt><strong>name</strong>: <em>string</em></dt><dd><p>Name of the Group which will be displayed in the GUI.</p>
+</dd>
+<dt><strong>user_storage</strong>: <em>picklable object</em></dt><dd><p>For the user needs, any small and picklable object can be stored here.</p>
+</dd>
+</dl>
+<p>&#64;type  elements: sequence of Job and/or Group
+&#64;param elements: the elements belonging to the group
+&#64;type  name: string
+&#64;param name: name of the group</p>
+</dd></dl>
+
+</div>
+<div class="section" id="job">
+<h2><a class="toc-backref" href="#id5">Job</a><a class="headerlink" href="#job" title="Permalink to this headline">¶</a></h2>
+<div class="graphviz"><img src="_images/inheritance-6800290190c1a8bb9560e591a2a41ddda7e7fa2e.png" alt="Inheritance diagram of client_types.Job, client_types.EngineExecutionJob, client_types.BarrierJob, custom_jobs.MapJob, custom_jobs.ReduceJob, custom_jobs.ListCatJob, custom_jobs.LeaveOneOutJob, custom_jobs.CrossValidationFoldJob, custom_jobs.StrCatJob" usemap="#inheritance1549f84022" class="inheritance graphviz" /></div>
+<map id="inheritance1549f84022" name="inheritance1549f84022">
+<area shape="rect" id="node1" href="#client_types.BarrierJob" target="_top" title="Barrier job: it is a &quot;fake&quot; job which does nothing (and will not become a" alt="" coords="361,5,445,31"/>
+<area shape="rect" id="node2" href="#client_types.EngineExecutionJob" target="_top" title="EngineExecutionJob: a lightweight job which will not run as a &quot;real&quot; job," alt="" coords="125,153,272,179"/>
+<area shape="rect" id="node3" href="#custom_jobs.CrossValidationFoldJob" target="_top" title="Separates an input list into folds, one (larger) for training, one" alt="" coords="320,55,485,80"/>
+<area shape="rect" id="node5" href="#custom_jobs.LeaveOneOutJob" target="_top" title="Removes an element from an input list, outputs it on a single separate" alt="" coords="339,104,467,129"/>
+<area shape="rect" id="node6" href="#custom_jobs.ListCatJob" target="_top" title="Concatenates several lists into a single list" alt="" coords="360,153,445,179"/>
+<area shape="rect" id="node7" href="#custom_jobs.MapJob" target="_top" title="Map job: converts lists into series of single items. Typically an input" alt="" coords="367,203,439,228"/>
+<area shape="rect" id="node8" href="#custom_jobs.ReduceJob" target="_top" title="Reduce job: converts series of inputs into lists. Typically a series of" alt="" coords="359,252,446,277"/>
+<area shape="rect" id="node9" href="#custom_jobs.StrCatJob" target="_top" title="Concatenates inputs into a string" alt="" coords="361,301,444,327"/>
+<area shape="rect" id="node4" href="#client_types.Job" target="_top" title="Job representation." alt="" coords="5,153,77,179"/>
+</map><dl class="py class">
+<dt id="client_types.Job">
+<em class="property">class </em><code class="sig-prename descclassname">client_types.</code><code class="sig-name descname">Job</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">command</span></em>, <em class="sig-param"><span class="n">referenced_input_files</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">referenced_output_files</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">stdin</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">join_stderrout</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">disposal_timeout</span><span class="o">=</span><span class="default_value">168</span></em>, <em class="sig-param"><span class="n">name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">stdout_file</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">stderr_file</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">working_directory</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">parallel_job_info</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">priority</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">native_specification</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">user_storage</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">env</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">param_dict</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">use_input_params_file</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">has_outputs</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">input_params_file</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">output_params_file</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">configuration</span><span class="o">=</span><span class="default_value">{}</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/client_types.html#Job"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#client_types.Job" title="Permalink to this definition">¶</a></dt>
+<dd><p>Job representation.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The command is the only argument required to create a Job.
+It is also useful to fill the job name for the workflow display in the GUI.</p>
+</div>
+<p><strong>Parallel jobs</strong></p>
+<p>When a job is designed to run on multiple processors, cluster managements systems normally do the necessary work to run or duplicate the job processes on multiple computing nodes. There are basically 3 classical ways to do it:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>use MPI (whatever implementation): job commands are run through a launcher program (<code class="docutils literal notranslate"><span class="pre">mpirun</span></code>) which will run the processes and establish inter-process communications.</p></li>
+<li><p>use OpenMP: this threading-based system allows to use several cores on the same computing node (using shared memory). The OpenMP allows to use the required nuber of threads.</p></li>
+<li><p>manual threading or forking (“native” mode).</p></li>
+</ul>
+</div></blockquote>
+<p>In all cases one job runs on several processors/cores. The MPI variant additionally allows to run the same job on several computing nodes (which do not share memory), the others should run on the same node (as far as I know - I’m not an expert of OpenMP). The job specifications should then precise which kind of parallelism they are using, the number of nodes the job should run on, and the number of CPU cores which should be allocated on each node. Thus the <strong>parallel_job_info</strong> variable of a job is a dictionary giving these 3 information, under the respective keys <cite>config_name</cite>, <cite>nodes_number</cite> and <cite>cpu_per_node</cite>. In OpenMP and native modes, the nodes_number should be 1.</p>
+<dl class="py attribute">
+<dt id="client_types.Job.command">
+<code class="sig-name descname">command</code><a class="headerlink" href="#client_types.Job.command" title="Permalink to this definition">¶</a></dt>
+<dd><p>The command to execute. It can not be empty. In case of a shared file system
+the command is a sequence of string.</p>
+<p>In the other cases, the FileTransfer, SharedResourcePath, and TemporaryPath
+objects will be replaced by the appropriate path before the job execution.</p>
+<p>The tuples (FileTransfer, relative_path) can be used to refer to a file in a
+transfered directory.</p>
+<p>The sequences of FileTransfer, SharedResourcePath or tuple (FileTransfer,
+relative_path) will be replaced by the string “[‘path1’, ‘path2’, ‘path3’]”
+before the job execution. The FileTransfer, SharedResourcePath or tuple
+(FileTransfer, relative_path) are replaced by the appropriate path inside
+the sequence.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>sequence of string or/and FileTransfer or/and SharedResourcePath or/and TemporaryPath or/and tuple (<a class="reference internal" href="#client.FileTransfer" title="client.FileTransfer">FileTransfer</a>, relative_path) or/and sequence of FileTransfer or/and sequence of SharedResourcePath or/and sequence of tuple (<a class="reference internal" href="#client.FileTransfer" title="client.FileTransfer">FileTransfer</a>, relative_path)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="client_types.Job.name">
+<code class="sig-name descname">name</code><a class="headerlink" href="#client_types.Job.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Name of the Job which will be displayed in the GUI</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="client_types.Job.referenced_input_files">
+<code class="sig-name descname">referenced_input_files</code><a class="headerlink" href="#client_types.Job.referenced_input_files" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of the FileTransfer which are input of the Job. In other words,
+FileTransfer which are requiered by the Job to run. It includes the
+stdin if you use one.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>sequence of SpecialPath (<a class="reference internal" href="#client.FileTransfer" title="client.FileTransfer">FileTransfer</a>, TemporaryPath…)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="client_types.Job.referenced_output_files">
+<code class="sig-name descname">referenced_output_files</code><a class="headerlink" href="#client_types.Job.referenced_output_files" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of the FileTransfer which are output of the Job. In other words,
+the FileTransfer which will be created or modified by the Job.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>sequence of SpecialPath (<a class="reference internal" href="#client.FileTransfer" title="client.FileTransfer">FileTransfer</a>, TemporaryPath…)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="client_types.Job.stdin">
+<code class="sig-name descname">stdin</code><a class="headerlink" href="#client_types.Job.stdin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path to the file which will be read as input stream by the Job.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>string or <a class="reference internal" href="#client.FileTransfer" title="client.FileTransfer">FileTransfer</a> or <a class="reference internal" href="#client.SharedResourcePath" title="client.SharedResourcePath">SharedResourcePath</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="client_types.Job.join_stderrout">
+<code class="sig-name descname">join_stderrout</code><a class="headerlink" href="#client_types.Job.join_stderrout" title="Permalink to this definition">¶</a></dt>
+<dd><p>Specifies whether the error stream should be mixed with the output stream.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>boolean</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="client_types.Job.stdout_file">
+<code class="sig-name descname">stdout_file</code><a class="headerlink" href="#client_types.Job.stdout_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path of the file where the standard output stream of the job will be
+redirected.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>string or <a class="reference internal" href="#client.FileTransfer" title="client.FileTransfer">FileTransfer</a> or <a class="reference internal" href="#client.SharedResourcePath" title="client.SharedResourcePath">SharedResourcePath</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="client_types.Job.stderr_file">
+<code class="sig-name descname">stderr_file</code><a class="headerlink" href="#client_types.Job.stderr_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path of the file where the standard error stream of the job will be
+redirected.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Set stdout_file and stderr_file only if you need to redirect the
+standard output to a specific file. Indeed, even if they are not set
+the standard outputs will always be available through the
+WorklfowController API.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>string or <a class="reference internal" href="#client.FileTransfer" title="client.FileTransfer">FileTransfer</a> or <a class="reference internal" href="#client.SharedResourcePath" title="client.SharedResourcePath">SharedResourcePath</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="client_types.Job.working_directory">
+<code class="sig-name descname">working_directory</code><a class="headerlink" href="#client_types.Job.working_directory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path of the directory where the job will be executed. The working directory
+is useful if your Job uses relative file path for example.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>string or <a class="reference internal" href="#client.FileTransfer" title="client.FileTransfer">FileTransfer</a> or <a class="reference internal" href="#client.SharedResourcePath" title="client.SharedResourcePath">SharedResourcePath</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="client_types.Job.priority">
+<code class="sig-name descname">priority</code><a class="headerlink" href="#client_types.Job.priority" title="Permalink to this definition">¶</a></dt>
+<dd><p>Job priority: 0 = low priority. If several Jobs are ready to run at the
+same time the jobs with higher priority will be submitted first.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)">int</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="client_types.Job.native_specification">
+<code class="sig-name descname">native_specification</code><a class="headerlink" href="#client_types.Job.native_specification" title="Permalink to this definition">¶</a></dt>
+<dd><p>Some specific option/function of the computing resource you want to use
+might not be available among the list of Soma-workflow Job attributes.
+Use the native specification attribute to use these specific functionalities.
+If a native_specification is defined here, the configured native
+specification will be ignored (documentation configuration item: NATIVE_SPECIFICATION).</p>
+<p><em>Example:</em> Specification of a job walltime and more:</p>
+<ul class="simple">
+<li><p>using a PBS cluster: native_specification=”-l walltime=10:00:00,pmem=16gb”</p></li>
+<li><p>using a SGE cluster: native_specification=”-l h_rt=10:00:00”</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="client_types.Job.parallel_job_info">
+<code class="sig-name descname">parallel_job_info</code><a class="headerlink" href="#client_types.Job.parallel_job_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>The parallel job information must be set if the Job is parallel (ie. made to
+run on several CPU).
+The parallel job information is a dict, with the following supported items:</p>
+<ul class="simple">
+<li><p>config_name: name of the configuration (native, MPI, OpenMP)</p></li>
+<li><p>nodes_number: number of computing nodes used by the Job,</p></li>
+<li><p>cpu_per_node: number of CPU or cores needed for each node</p></li>
+</ul>
+<p>The configuration name is the type of parallel Job. Example: MPI or OpenMP.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The computing resources must be configured explicitly to use this feature.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)">dict</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="client_types.Job.user_storage">
+<code class="sig-name descname">user_storage</code><a class="headerlink" href="#client_types.Job.user_storage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Should have been any small and picklable object for user need but was never
+fully implemented. This parameter is simply ignored.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>picklable object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="client_types.Job.env">
+<code class="sig-name descname">env</code><a class="headerlink" href="#client_types.Job.env" title="Permalink to this definition">¶</a></dt>
+<dd><p>Environment variables to use when the job gets executed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)">dict</a>(string, string)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="client_types.Job.param_dict">
+<code class="sig-name descname">param_dict</code><a class="headerlink" href="#client_types.Job.param_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>New in 3.1.
+Optional dictionary for job “parameters values”. In case of dynamic
+outputs from a job, downstream jobjs values have to be set accordingly
+during the workflow execution. Thus we must be able to know how to
+replace the parameters values in the commandline. To do so, jobs should
+provide commandlines not with builtin values, but with replacement
+strings, and a dict of parameters with names:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">command</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;cp&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%(source)s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%(dest)s</span><span class="s1">&#39;</span><span class="p">]</span>
+<span class="n">param_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;source&#39;</span><span class="p">:</span> <span class="s1">&#39;/data/file1.txt&#39;</span><span class="p">,</span>
+              <span class="s1">&#39;dest&#39;</span><span class="p">:</span> <span class="s1">&#39;/data/file2.txt&#39;</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>Parameters names can be linked in the workflow to some other jobs
+outputs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)">dict</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="client_types.Job.use_input_params_file">
+<code class="sig-name descname">use_input_params_file</code><a class="headerlink" href="#client_types.Job.use_input_params_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>if True, input parameters from the param_dict will not be passed using
+substitutions in the commandline, but through a JSON file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)">bool</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="client_types.Job.has_outputs">
+<code class="sig-name descname">has_outputs</code><a class="headerlink" href="#client_types.Job.has_outputs" title="Permalink to this definition">¶</a></dt>
+<dd><p>New in 3.1.
+Set if the job will write a special JSON file which contains output
+parameters values, when the job is a process with outputs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)">bool</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="client_types.Job.input_params_file">
+<code class="sig-name descname">input_params_file</code><a class="headerlink" href="#client_types.Job.input_params_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path to the file which will contain input parameters of the
+job.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>string or <a class="reference internal" href="#client.FileTransfer" title="client.FileTransfer">FileTransfer</a> or <a class="reference internal" href="#client.SharedResourcePath" title="client.SharedResourcePath">SharedResourcePath</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="client_types.Job.output_params_file">
+<code class="sig-name descname">output_params_file</code><a class="headerlink" href="#client_types.Job.output_params_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path to the file which will be written for output parameters of the
+job.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>string or <a class="reference internal" href="#client.FileTransfer" title="client.FileTransfer">FileTransfer</a> or <a class="reference internal" href="#client.SharedResourcePath" title="client.SharedResourcePath">SharedResourcePath</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="client_types.Job.disposal_timeout">
+<code class="sig-name descname">disposal_timeout</code><a class="headerlink" href="#client_types.Job.disposal_timeout" title="Permalink to this definition">¶</a></dt>
+<dd><p>Only requiered outside of a workflow</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)">int</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="client_types.Job.commandline_repl">
+<code class="sig-name descname">commandline_repl</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">command</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/client_types.html#Job.commandline_repl"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#client_types.Job.commandline_repl" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get “processed” commandline list. Each element in the commandline list
+which contains a replacement string in the shame %(var)s is replaced
+using the param_dict values.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="client_types.Job.from_dict">
+<em class="property">classmethod </em><code class="sig-name descname">from_dict</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">d</span></em>, <em class="sig-param"><span class="n">tr_from_ids</span></em>, <em class="sig-param"><span class="n">srp_from_ids</span></em>, <em class="sig-param"><span class="n">tmp_from_ids</span></em>, <em class="sig-param"><span class="n">opt_from_ids</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/client_types.html#Job.from_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#client_types.Job.from_dict" title="Permalink to this definition">¶</a></dt>
+<dd><ul class="simple">
+<li><p>d <em>dictionary</em></p></li>
+<li><p>tr_from_id <em>id -&gt; FileTransfer</em></p></li>
+<li><p>srp_from_id <em>id -&gt; SharedResourcePath</em></p></li>
+<li><p>tmp_from_ids <em>id -&gt; TemporaryPath</em></p></li>
+<li><p>opt_from_ids <em>id -&gt; OptionPath</em></p></li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
+<dt id="client_types.Job.to_dict">
+<code class="sig-name descname">to_dict</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">id_generator</span></em>, <em class="sig-param"><span class="n">transfer_ids</span></em>, <em class="sig-param"><span class="n">shared_res_path_id</span></em>, <em class="sig-param"><span class="n">tmp_ids</span></em>, <em class="sig-param"><span class="n">opt_ids</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/client_types.html#Job.to_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#client_types.Job.to_dict" title="Permalink to this definition">¶</a></dt>
+<dd><ul class="simple">
+<li><p>id_generator <em>IdGenerator</em></p></li>
+<li><dl class="simple">
+<dt>transfer_ids <em>dict: client.FileTransfer -&gt; int</em></dt><dd><p>This dictonary will be modified.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>shared_res_path_id <em>dict: client.SharedResourcePath -&gt; int</em></dt><dd><p>This dictonary will be modified.</p>
+</dd>
+</dl>
+</li>
+<li><p>tmp_ids <em>dict: client.TemporaryPath -&gt; int</em></p></li>
+<li><p>opt_ids <em>dict: client.OptionPath -&gt; int</em></p></li>
+</ul>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="client_types.EngineExecutionJob">
+<em class="property">class </em><code class="sig-prename descclassname">client_types.</code><code class="sig-name descname">EngineExecutionJob</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">command</span></em>, <em class="sig-param"><span class="n">referenced_input_files</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">referenced_output_files</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">stdin</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">join_stderrout</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">disposal_timeout</span><span class="o">=</span><span class="default_value">168</span></em>, <em class="sig-param"><span class="n">name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">stdout_file</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">stderr_file</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">working_directory</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">parallel_job_info</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">priority</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">native_specification</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">user_storage</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">env</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">param_dict</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">use_input_params_file</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">has_outputs</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">input_params_file</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">output_params_file</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">configuration</span><span class="o">=</span><span class="default_value">{}</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/client_types.html#EngineExecutionJob"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#client_types.EngineExecutionJob" title="Permalink to this definition">¶</a></dt>
+<dd><p>EngineExecutionJob: a lightweight job which will not run as a “real” job,
+but as a python function, on the engine server side.</p>
+<p>Such jobs are meant to perform fast, simple operations on their inputs in
+order to produce modified inputs for other downstream jobs, such as string
+substituitons, lists manipulations, etc. As they will run in the engine
+process (generally the jobs submission machine) they should not perform
+expensive processing (CPU or memory-consuming).</p>
+<p>They are an alternative to link functions in Workflows.</p>
+<p>The only method an EngineExecutionJob defines is <code class="xref py py-meth docutils literal notranslate"><span class="pre">engine_execution()</span></code>,
+which will be able to use its parameters dict (as defined in its param_dict
+as any other job), and will return an output parameters dict.</p>
+<p>Warning: the <code class="xref py py-meth docutils literal notranslate"><span class="pre">engine_execution()</span></code> is actually a <strong>class method</strong>, not a
+regular instance method. The reason for this is that it will be used with
+an <code class="xref py py-class docutils literal notranslate"><span class="pre">EngineJob</span></code> instance, which inherits
+<a class="reference internal" href="#client_types.Job" title="client_types.Job"><code class="xref py py-class docutils literal notranslate"><span class="pre">Job</span></code></a>, but not the exact subclass. Thus in the method, <code class="docutils literal notranslate"><span class="pre">self</span></code> is
+not a real instance of the class.</p>
+<p>The default implementation just passes its input parameters as outputs in
+order to allow later jobs to reuse their parameters. Subclasses define
+their own <code class="xref py py-meth docutils literal notranslate"><span class="pre">engine_execution()</span></code> methods.</p>
+<p>See <a class="reference internal" href="#engine-execution-job"><span class="std std-ref">Engine execution jobs</span></a> for more details.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="client_types.BarrierJob">
+<em class="property">class </em><code class="sig-prename descclassname">client_types.</code><code class="sig-name descname">BarrierJob</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">command</span><span class="o">=</span><span class="default_value">[]</span></em>, <em class="sig-param"><span class="n">referenced_input_files</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">referenced_output_files</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">name</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/client_types.html#BarrierJob"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#client_types.BarrierJob" title="Permalink to this definition">¶</a></dt>
+<dd><p>Barrier job: it is a “fake” job which does nothing (and will not become a
+real job on the DRMS) but has dependencies.
+It may be used to make a dependencies hub, to avoid too many dependencies
+with fully connected jobs sets.</p>
+<p>BarrierJob is implemented as an EngineExecutionJob, and just differs in its
+name, as its <code class="xref py py-meth docutils literal notranslate"><span class="pre">engine_execution()</span></code> method does
+nothing.</p>
+<dl>
+<dt>Ex:</dt><dd><p>(Job1, Job2, Job3) should be all connected to (Job4, Job5, Job6)
+needs 3*3 = 9 (N^2) dependencies.
+With a barrier:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Job1</span>              <span class="n">Job4</span>
+      \         <span class="o">/</span>
+<span class="n">Job2</span> <span class="o">--</span> <span class="n">Barrier</span> <span class="o">--</span> <span class="n">Job5</span>
+      <span class="o">/</span>         \<span class="o">.</span>
+<span class="n">Job3</span>              <span class="n">Job6</span>
+</pre></div>
+</div>
+<p>needs 6 (2*N).</p>
+</dd>
+</dl>
+<p>BarrierJob constructor accepts only a subset of Job constructor parameter:</p>
+<p><strong>referenced_input_files</strong></p>
+<p><strong>referenced_output_files</strong></p>
+<p><strong>name</strong></p>
+<dl class="py method">
+<dt id="client_types.BarrierJob.from_dict">
+<em class="property">classmethod </em><code class="sig-name descname">from_dict</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">d</span></em>, <em class="sig-param"><span class="n">tr_from_ids</span></em>, <em class="sig-param"><span class="n">srp_from_ids</span></em>, <em class="sig-param"><span class="n">tmp_from_ids</span></em>, <em class="sig-param"><span class="n">opt_from_ids</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/client_types.html#BarrierJob.from_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#client_types.BarrierJob.from_dict" title="Permalink to this definition">¶</a></dt>
+<dd><ul class="simple">
+<li><p>d <em>dictionary</em></p></li>
+<li><p>tr_from_id <em>id -&gt; FileTransfer</em></p></li>
+<li><p>srp_from_id <em>id -&gt; SharedResourcePath</em></p></li>
+<li><p>tmp_from_ids <em>id -&gt; TemporaryPath</em></p></li>
+<li><p>opt_from_ids <em>id -&gt; OptionPath</em></p></li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
+<dt id="client_types.BarrierJob.to_dict">
+<code class="sig-name descname">to_dict</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">id_generator</span></em>, <em class="sig-param"><span class="n">transfer_ids</span></em>, <em class="sig-param"><span class="n">shared_res_path_id</span></em>, <em class="sig-param"><span class="n">tmp_ids</span></em>, <em class="sig-param"><span class="n">opt_ids</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/client_types.html#BarrierJob.to_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#client_types.BarrierJob.to_dict" title="Permalink to this definition">¶</a></dt>
+<dd><ul class="simple">
+<li><p>id_generator <em>IdGenerator</em></p></li>
+<li><dl class="simple">
+<dt>transfer_ids <em>dict: client.FileTransfer -&gt; int</em></dt><dd><p>This dictonary will be modified.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>shared_res_path_id <em>dict: client.SharedResourcePath -&gt; int</em></dt><dd><p>This dictonary will be modified.</p>
+</dd>
+</dl>
+</li>
+<li><p>tmp_ids <em>dict: client.TemporaryPath -&gt; int</em></p></li>
+<li><p>opt_ids <em>dict: client.OptionPath -&gt; int</em></p></li>
+</ul>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="custom_jobs.MapJob">
+<em class="property">class </em><code class="sig-prename descclassname">custom_jobs.</code><code class="sig-name descname">MapJob</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">command</span><span class="o">=</span><span class="default_value">[]</span></em>, <em class="sig-param"><span class="n">referenced_input_files</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">referenced_output_files</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">name</span><span class="o">=</span><span class="default_value">'map'</span></em>, <em class="sig-param"><span class="n">param_dict</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/custom_jobs.html#MapJob"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#custom_jobs.MapJob" title="Permalink to this definition">¶</a></dt>
+<dd><p>Map job: converts lists into series of single items. Typically an input
+named <code class="docutils literal notranslate"><span class="pre">inputs</span></code> is a list of items. The job will separate items and
+output each of them as an output parameter. The i-th item will be output as
+<code class="docutils literal notranslate"><span class="pre">output_&lt;i&gt;</span></code> by default.
+The inputs / outputs names can be customized using the named parameters
+<code class="docutils literal notranslate"><span class="pre">input_names</span></code> and <code class="docutils literal notranslate"><span class="pre">output_names</span></code>. Several lists can be split in the
+same job.
+The job will also output a <code class="docutils literal notranslate"><span class="pre">lengths</span></code> parameter which will contain the
+input lists lengths. This lengths can typically be input in reduce jobs to
+perform the reverse operation (see <a class="reference internal" href="#custom_jobs.ReduceJob" title="custom_jobs.ReduceJob"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReduceJob</span></code></a>).</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">input_names</span></code> is a list of input parameters names, each being a list to</p></li>
+</ul>
+<p>be split. The default is <code class="docutils literal notranslate"><span class="pre">['inputs']</span></code>
+* <code class="docutils literal notranslate"><span class="pre">output_names</span></code> is a list of patterns used to build output parameters
+names. Each item is a string containing a substitution pattern <code class="docutils literal notranslate"><span class="pre">&quot;%d&quot;</span></code>
+which will be replaced with a number. The default is <code class="docutils literal notranslate"><span class="pre">['output_%d']</span></code>.
+Each pattern will be used to replace items from the corresponding input in
+the same order. Thus <code class="docutils literal notranslate"><span class="pre">input_names</span></code>  and <code class="docutils literal notranslate"><span class="pre">output_names</span></code> should be the
+same length.
+* all other parameters given in <code class="docutils literal notranslate"><span class="pre">param_dict</span></code> are passed to the output
+dictionary of the job, so that the job acts as a
+<code class="xref py py-class docutils literal notranslate"><span class="pre">BarrierJob</span></code> for parameters which are
+not “mapped”.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="custom_jobs.ReduceJob">
+<em class="property">class </em><code class="sig-prename descclassname">custom_jobs.</code><code class="sig-name descname">ReduceJob</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">command</span><span class="o">=</span><span class="default_value">[]</span></em>, <em class="sig-param"><span class="n">referenced_input_files</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">referenced_output_files</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">name</span><span class="o">=</span><span class="default_value">'reduce'</span></em>, <em class="sig-param"><span class="n">param_dict</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/custom_jobs.html#ReduceJob"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#custom_jobs.ReduceJob" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reduce job: converts series of inputs into lists. Typically a series of
+inputs named <code class="docutils literal notranslate"><span class="pre">input_0</span></code> .. <code class="docutils literal notranslate"><span class="pre">input_&lt;n&gt;</span></code> will be output as a single list
+named <code class="docutils literal notranslate"><span class="pre">outputs</span></code>.</p>
+<p>Several input series can be handled by the job, and input names can be
+customized.</p>
+<ul class="simple">
+<li><p>The numbers of inputs for each series is given as the <code class="docutils literal notranslate"><span class="pre">lengths</span></code> input</p></li>
+</ul>
+<p>parameter. It is typically linked from the output of a <a class="reference internal" href="#custom_jobs.MapJob" title="custom_jobs.MapJob"><code class="xref py py-class docutils literal notranslate"><span class="pre">MapJob</span></code></a>.
+* Input parameters names patterns are given as the <code class="docutils literal notranslate"><span class="pre">input_names</span></code>
+parameter. It is a list of patterns, each containing a <code class="docutils literal notranslate"><span class="pre">%d``pattern</span> <span class="pre">for</span>
+<span class="pre">the</span> <span class="pre">input</span> <span class="pre">number.</span> <span class="pre">The</span> <span class="pre">defaut</span> <span class="pre">value</span> <span class="pre">is</span> <span class="pre">``['input_%d']</span></code>.
+* Output parameters names are given as the <code class="docutils literal notranslate"><span class="pre">output_names</span></code> parameter. The
+default is <code class="docutils literal notranslate"><span class="pre">['outputs']</span></code>.
+* all other parameters given in <code class="docutils literal notranslate"><span class="pre">param_dict</span></code> are passed to the output
+dictionary of the job, so that the job acts as a
+<code class="xref py py-class docutils literal notranslate"><span class="pre">BarrierJob</span></code> for parameters which are
+not “reduced”.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="custom_jobs.ListCatJob">
+<em class="property">class </em><code class="sig-prename descclassname">custom_jobs.</code><code class="sig-name descname">ListCatJob</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">command</span><span class="o">=</span><span class="default_value">[]</span></em>, <em class="sig-param"><span class="n">referenced_input_files</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">referenced_output_files</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">name</span><span class="o">=</span><span class="default_value">'list_cat'</span></em>, <em class="sig-param"><span class="n">param_dict</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/custom_jobs.html#ListCatJob"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#custom_jobs.ListCatJob" title="Permalink to this definition">¶</a></dt>
+<dd><p>Concatenates several lists into a single list</p>
+<p>The input lists should be specified as the <code class="docutils literal notranslate"><span class="pre">inputs</span></code> parameter (a list of
+lists, thus). The output parameter <code class="docutils literal notranslate"><span class="pre">outputs</span></code>  will be assigned the concatenated list.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="custom_jobs.StrCatJob">
+<em class="property">class </em><code class="sig-prename descclassname">custom_jobs.</code><code class="sig-name descname">StrCatJob</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">command</span><span class="o">=</span><span class="default_value">[]</span></em>, <em class="sig-param"><span class="n">referenced_input_files</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">referenced_output_files</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">name</span><span class="o">=</span><span class="default_value">'strcat'</span></em>, <em class="sig-param"><span class="n">param_dict</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/custom_jobs.html#StrCatJob"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#custom_jobs.StrCatJob" title="Permalink to this definition">¶</a></dt>
+<dd><p>Concatenates inputs into a string</p>
+<p>Inputs listed in <code class="docutils literal notranslate"><span class="pre">input_names</span></code> are concatenated into an output string.
+Inputs may be strings or lists of strings. Listes are also concatenated
+into a string.
+The output parameter is given as the <code class="docutils literal notranslate"><span class="pre">output_name</span></code> parameter, if given,
+and defaults to `` output`` otherwise.
+<code class="docutils literal notranslate"><span class="pre">input_names</span></code> is optional and defaults to <code class="docutils literal notranslate"><span class="pre">inputs</span></code> (thus by default the
+job expects a single list).</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="custom_jobs.LeaveOneOutJob">
+<em class="property">class </em><code class="sig-prename descclassname">custom_jobs.</code><code class="sig-name descname">LeaveOneOutJob</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">command</span><span class="o">=</span><span class="default_value">[]</span></em>, <em class="sig-param"><span class="n">referenced_input_files</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">referenced_output_files</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">name</span><span class="o">=</span><span class="default_value">'leave_one_out'</span></em>, <em class="sig-param"><span class="n">param_dict</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/custom_jobs.html#LeaveOneOutJob"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#custom_jobs.LeaveOneOutJob" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes an element from an input list, outputs it on a single separate
+output.</p>
+<p>The input list should be specified as the <code class="docutils literal notranslate"><span class="pre">inputs</span></code> parameter, and the
+item index as <code class="docutils literal notranslate"><span class="pre">index</span></code>. The output parameters <code class="docutils literal notranslate"><span class="pre">train</span></code> and
+<code class="docutils literal notranslate"><span class="pre">test</span></code> will be assigned the modified list and extracted element,
+respectively.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="custom_jobs.CrossValidationFoldJob">
+<em class="property">class </em><code class="sig-prename descclassname">custom_jobs.</code><code class="sig-name descname">CrossValidationFoldJob</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">command</span><span class="o">=</span><span class="default_value">[]</span></em>, <em class="sig-param"><span class="n">referenced_input_files</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">referenced_output_files</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">name</span><span class="o">=</span><span class="default_value">'cross_validation'</span></em>, <em class="sig-param"><span class="n">param_dict</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/custom_jobs.html#CrossValidationFoldJob"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#custom_jobs.CrossValidationFoldJob" title="Permalink to this definition">¶</a></dt>
+<dd><p>Separates an input list into folds, one (larger) for training, one
+(smaller) for testing.</p>
+<p>The input list <code class="docutils literal notranslate"><span class="pre">inputs</span></code> is separated into folds. The number of folds
+should be specified as the <code class="docutils literal notranslate"><span class="pre">nfolds</span></code> parameter, the fold number as
+<code class="docutils literal notranslate"><span class="pre">fold</span></code>. Outputs are <code class="docutils literal notranslate"><span class="pre">train`</span> <span class="pre">and</span> <span class="pre">``test</span></code> parameters.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="filetransfer">
+<h2><a class="toc-backref" href="#id6">FileTransfer</a><a class="headerlink" href="#filetransfer" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="client.FileTransfer">
+<em class="property">class </em><code class="sig-prename descclassname">client.</code><code class="sig-name descname">FileTransfer</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">is_input</span></em>, <em class="sig-param"><span class="n">client_path</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">disposal_timeout</span><span class="o">=</span><span class="default_value">168</span></em>, <em class="sig-param"><span class="n">name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">client_paths</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/soma_workflow/client_types.html#FileTransfer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#client.FileTransfer" title="Permalink to this definition">¶</a></dt>
+<dd><p>File/directory transfer representation</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>FileTransfers objects are only required if the user and computing resources
+have a separate file system.</p>
+</div>
+<dl class="simple">
+<dt><strong>client_path</strong>: <em>string</em></dt><dd><p>Path of the file or directory on the user’s file system.</p>
+</dd>
+<dt><strong>initial_status</strong>: <em>constants.FILES_DO_NOT_EXIST or constants.FILES_ON_CLIENT</em></dt><dd><ul class="simple">
+<li><p>constants.FILES_ON_CLIENT for workflow input files
+The file(s) will need to be transfered on the computing resource side</p></li>
+<li><p>constants.FILES_DO_NOT_EXIST for workflow output files
+The file(s) will be created by a job on the computing resource side.</p></li>
+</ul>
+</dd>
+<dt><strong>client_paths</strong>: <em>sequence of string</em></dt><dd><p>Sequence of path. Files to transfer if the FileTransfers concerns a file
+series or if the file format involves several associated files or
+directories (see the note below).</p>
+</dd>
+<dt><strong>name</strong>: <em>string</em></dt><dd><p>Name of the FileTransfer which will be displayed in the GUI.
+Default: client_path + “transfer”</p>
+</dd>
+</dl>
+<p>When a file is transfered via a FileTransfer, the Job it is used in has to be
+built using the FileTransfer object in place of the file name in the command
+list. The FileTransfer object has also to be on the referenced_input_files
+or referenced_output_files lists in Job constructor.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Use client_paths if the transfer involves several associated files and/or
+directories. Examples:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>file series</p></li>
+<li><p>file format associating several file and/or directories
+(ex: a SPM images are stored in 2 associated files: .img and .hdr)
+In this case, set client_path to one the files (ex: .img) and
+client_paths contains all the files (ex: .img and .hdr files)</p></li>
+</ul>
+</div></blockquote>
+<p>In other cases (1 file or 1 directory) the client_paths must be set to
+None.</p>
+<p>When client_paths is not None, the server-side handling of paths is
+different: the server directory is used istead of files. This has slight
+consequences on the behaviour of the workflow:</p>
+<ul>
+<li><p>in soma-workflow 2.6 and earlier, the commandline will be using the
+directory instead of a file name, which is often not what you expect.</p></li>
+<li><p>in soma-workflow 2.7 and later, the commandline will be using the
+main file name (client_path) translated to the server location. This is
+more probably what is expected.</p></li>
+<li><p>in any case it is possible to specify the commandline path using a
+tuple as commandline argument:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">myfile</span> <span class="o">=</span> <span class="n">FileTransfer</span><span class="p">(</span><span class="n">is_input</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">client_path</span><span class="o">=</span><span class="s1">&#39;/home/bubu/plof.nii&#39;</span><span class="p">,</span>
+    <span class="n">client_paths</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;/home/bubu/plof.nii&#39;</span><span class="p">,</span> <span class="s1">&#39;/home/bubu/plof.nii.minf&#39;</span><span class="p">])</span>
+<span class="c1"># job1 will work with SWF &gt;= 2.7, not in 2.6</span>
+<span class="n">job1</span> <span class="o">=</span> <span class="n">Job</span><span class="p">(</span><span class="n">command</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;AimsFileInfo&#39;</span><span class="p">,</span> <span class="n">myfile</span><span class="p">],</span>
+    <span class="n">referenced_input_files</span><span class="o">=</span><span class="p">[</span><span class="n">myfile</span><span class="p">])</span>
+<span class="c1"># job2 will use &lt;engine_path&gt;/plof.nii as input</span>
+<span class="n">job2</span> <span class="o">=</span> <span class="n">Job</span><span class="p">(</span><span class="n">command</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;AimsFileInfo&#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">myfile</span><span class="p">,</span> <span class="s1">&#39;plof.nii&#39;</span><span class="p">)],</span>
+    <span class="n">referenced_input_files</span><span class="o">=</span><span class="p">[</span><span class="n">myfile</span><span class="p">]))</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>is_input</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – specifies if the files have to be transferred from the client before
+job execution, or back to the client after execution.</p></li>
+<li><p><strong>client_path</strong> (<em>string</em>) – main file name</p></li>
+<li><p><strong>disposal_timeout</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a><em> (</em><em>optional</em><em>)</em>) – default: 168</p></li>
+<li><p><strong>name</strong> (<em>string</em><em> (</em><em>optional</em><em>)</em>) – name displayed in the GUI</p></li>
+<li><p><strong>client_paths</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.9)"><em>list</em></a><em> (</em><em>optional</em><em>)</em>) – when several files are involved</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="sharedresourcepath">
+<span id="shared-resource-path-api"></span><h2><a class="toc-backref" href="#id7">SharedResourcePath</a><a class="headerlink" href="#sharedresourcepath" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="client.SharedResourcePath">
+<em class="property">class </em><code class="sig-prename descclassname">client.</code><code class="sig-name descname">SharedResourcePath</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">relative_path</span></em>, <em class="sig-param"><span class="n">namespace</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">uuid</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">disposal_timeout</span><span class="o">=</span><span class="default_value">168</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/soma_workflow/client_types.html#SharedResourcePath"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#client.SharedResourcePath" title="Permalink to this definition">¶</a></dt>
+<dd><p>Representation of path which is valid on either user’s or computing resource
+file system.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>SharedResourcePath objects are only required if the user and computing
+resources have a separate file system.</p>
+</div>
+<dl class="simple">
+<dt><strong>namespace</strong>: <em>string</em></dt><dd><p>Namespace for the path. That way several applications can use the same
+identifiers without risk.</p>
+</dd>
+<dt><strong>uuid</strong>: <em>string</em></dt><dd><p>Identifier of the absolute path.</p>
+</dd>
+<dt><strong>relative_path</strong>: <em>string</em></dt><dd><p>Relative path of the file if the absolute path is a directory path.</p>
+</dd>
+</dl>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The namespace and uuid must exist in the translations files configured on
+the computing resource side.</p>
+</div>
+</dd></dl>
+
+</div>
+<div class="section" id="temporarypath">
+<span id="temporary-path-api"></span><h2><a class="toc-backref" href="#id8">TemporaryPath</a><a class="headerlink" href="#temporarypath" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="client.TemporaryPath">
+<em class="property">class </em><code class="sig-prename descclassname">client.</code><code class="sig-name descname">TemporaryPath</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">is_directory</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">disposal_timeout</span><span class="o">=</span><span class="default_value">168</span></em>, <em class="sig-param"><span class="n">name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">suffix</span><span class="o">=</span><span class="default_value">''</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/soma_workflow/client_types.html#TemporaryPath"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#client.TemporaryPath" title="Permalink to this definition">¶</a></dt>
+<dd><p>Temporary file representation. This temporary file will never exist on client
+side: its filename will be created on server side, used during the workflow
+execution, and removed when not used any longer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>is_directory</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a><em> (</em><em>optional</em><em>)</em>) – default: False</p></li>
+<li><p><strong>disposal_timeout</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a><em> (</em><em>optional</em><em>)</em>) – default: 168</p></li>
+<li><p><strong>name</strong> (<em>string</em><em> (</em><em>optional</em><em>)</em>) – name for the TemporaryPath object, displayed in GUI for instance</p></li>
+<li><p><strong>suffix</strong> (<em>string</em><em> (</em><em>optional</em><em>)</em>) – suffix (typically: extension) applied to the generated file name</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="dynamic-output-parameters-values-in-soma-workflow">
+<span id="dynamic-outputs"></span><h2><a class="toc-backref" href="#id9">Dynamic output parameters values in Soma-Workflow</a><a class="headerlink" href="#dynamic-output-parameters-values-in-soma-workflow" title="Permalink to this headline">¶</a></h2>
+<p>This is a new feature in Soma-Workflow 3.1.</p>
+<p>It allows jobs to produce “output parameters”, which will in turn be used as inputs in downstream jobs.</p>
+<p>As jobs are basically commandlines, they normally cannot have outputs other than files. Thus we manage the output parameters by allowing a job to write an additional file (JSON format) containing a dictionary of output parameters and values.</p>
+<p>Such a job will be “marked” as producing outputs (Job variable <code class="docutils literal notranslate"><span class="pre">has_outputs</span></code>, and before running it, Soma-Workflow will set the environment variable <code class="docutils literal notranslate"><span class="pre">SOMAWF_OUTPUT_PARAMS</span></code> for it, with an output filename value. The job should write the output file at this location. The output parameters file will be read by Soma-Workflow once the job has successfully finished.</p>
+<p>Then when running later jobs, their input values will be changed accordingly. To allow this, we need a few things:</p>
+<div class="section" id="using-dynamic-output-parameters">
+<h3><a class="toc-backref" href="#id10">Using dynamic output parameters</a><a class="headerlink" href="#using-dynamic-output-parameters" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>such jobs should declare a dictionary of input parameters (Job variable <code class="docutils literal notranslate"><span class="pre">param_dict</span></code>)</p></li>
+<li><p>the workflow should define some “parameters links” between jobs in order to connect output parameters values from one job to the input parameters values of downstream jobs: Workflow variable <code class="docutils literal notranslate"><span class="pre">param_linnks</span></code>.</p></li>
+<li><p>The input parameters dictionary of a job has to be used to re-build its commandline properly after their values have changed. To do so, the commandline arguments of such jobs can contain some substitution strings in the python style <code class="docutils literal notranslate"><span class="pre">&quot;%(param)s&quot;</span></code>, where <code class="docutils literal notranslate"><span class="pre">param</span></code> is a named parameter in the dictionary.</p></li>
+</ul>
+<p>To put things togethr in an example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">soma_workflow.client</span> <span class="kn">import</span> <span class="n">Job</span><span class="p">,</span> <span class="n">Workflow</span><span class="p">,</span> <span class="n">WorkflowController</span>
+
+<span class="c1"># workflow definition</span>
+
+<span class="n">job1</span> <span class="o">=</span> <span class="n">Job</span><span class="p">(</span>
+    <span class="n">command</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;my_program&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%(in1)s</span><span class="s1">&#39;</span><span class="p">],</span>
+    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;job1:cp&#39;</span><span class="p">,</span>
+    <span class="n">param_dict</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;in1&#39;</span><span class="p">:</span> <span class="s1">&#39;/tmp/input_file&#39;</span><span class="p">},</span>
+    <span class="n">has_outputs</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">job2</span> <span class="o">=</span> <span class="n">Job</span><span class="p">(</span>
+    <span class="n">command</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;cat&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%(in1)s</span><span class="s1">&#39;</span><span class="p">],</span>
+    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;job2:cat&#39;</span><span class="p">,</span>
+    <span class="n">param_dict</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;in1&#39;</span><span class="p">:</span> <span class="s1">&#39;undefined&#39;</span><span class="p">})</span>
+<span class="n">workflow</span> <span class="o">=</span> <span class="n">Workflow</span><span class="p">(</span><span class="n">jobs</span><span class="o">=</span><span class="p">[</span><span class="n">job1</span><span class="p">,</span> <span class="n">job2</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;test_workflow&#39;</span><span class="p">,</span>
+                    <span class="n">param_links</span><span class="o">=</span><span class="p">{</span><span class="n">job2</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;in1&#39;</span><span class="p">:</span> <span class="p">[(</span><span class="n">job1</span><span class="p">,</span> <span class="s1">&#39;out1&#39;</span><span class="p">)]}})</span>
+
+<span class="c1"># running it is the classical way</span>
+<span class="c1"># (or using soma_workflow_gui)</span>
+
+<span class="n">wc</span> <span class="o">=</span> <span class="n">WorkflowController</span><span class="p">()</span>
+<span class="n">wf_id</span> <span class="o">=</span> <span class="n">wc</span><span class="o">.</span><span class="n">submit_workflow</span><span class="p">(</span><span class="n">workflow</span><span class="p">)</span>
+<span class="n">wc</span><span class="o">.</span><span class="n">wait_workflow</span><span class="p">(</span><span class="n">wf_id</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Here, <code class="docutils literal notranslate"><span class="pre">job1</span></code> will run a program, <code class="docutils literal notranslate"><span class="pre">my_program</span></code> which will do its job, and write the output parameters file. The <code class="docutils literal notranslate"><span class="pre">param_dict</span></code> in job1 is not necessary here, since its parameters values will not change according to upstream operations, but if we want to allow job classes to be used in such “dynamic” workflows, we rather have to get used to name all their parameters.</p>
+<p><code class="docutils literal notranslate"><span class="pre">job2</span></code> input parameter <code class="docutils literal notranslate"><span class="pre">in1</span></code> will get its value from <code class="docutils literal notranslate"><span class="pre">job1</span></code> ouput named <code class="docutils literal notranslate"><span class="pre">out1</span></code>. This is specified via the workflow <code class="docutils literal notranslate"><span class="pre">param_links</span></code> which is a dict associating to a destination job a set of parameters values, each coming from another job’s parameter. For instance:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">param_links</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">dest_job1</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;dest_param1&#39;</span><span class="p">:</span> <span class="p">[(</span><span class="n">src_job1</span><span class="p">,</span> <span class="s1">&#39;src_output_param1&#39;</span><span class="p">)],</span>
+        <span class="s1">&#39;dest_param2&#39;</span><span class="p">:</span> <span class="p">[(</span><span class="n">src_job2</span><span class="p">,</span> <span class="s1">&#39;src_output_param2&#39;</span><span class="p">)],</span>
+    <span class="p">},</span>
+    <span class="n">dest_job2</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;dest_param3&#39;</span><span class="p">:</span> <span class="p">[(</span><span class="n">src_job3</span><span class="p">,</span> <span class="s1">&#39;src_output_param3&#39;</span><span class="p">)],</span>
+        <span class="s1">&#39;dest_param4&#39;</span><span class="p">:</span> <span class="p">[(</span><span class="n">src_job4</span><span class="p">,</span> <span class="s1">&#39;src_output_param4&#39;</span><span class="p">)],</span>
+    <span class="p">},</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Note that <code class="docutils literal notranslate"><span class="pre">param_links</span></code> in the workflow implicitly add jobs dependencies. These new dependencies are automatically added to the “classical” jobs dependencies, and may completely replace them if parameters links are correctly specified and used all along the workflow.</p>
+<p>Now the <code class="docutils literal notranslate"><span class="pre">job1</span></code> commandline program, if written in Python language, could look like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="c1"># we have to write the output parameters values in this file:</span>
+<span class="n">output_param_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;SOMAWF_OUTPUT_PARAMS&#39;</span><span class="p">)</span>
+
+<span class="c1"># we impose a &quot;hard-coded&quot; output path, just because our programs</span>
+<span class="c1"># works that way.</span>
+<span class="n">out_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s1">&#39;~/bubulle.txt&#39;</span><span class="p">)</span>
+
+<span class="n">in_file</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># input given as parameter from the job</span>
+<span class="c1"># let&#39;s say this is the &quot;real&quot; job of my_program</span>
+<span class="n">shutil</span><span class="o">.</span><span class="n">copy2</span><span class="p">(</span><span class="n">in_file</span><span class="p">,</span> <span class="n">out_file</span><span class="p">)</span>
+
+<span class="c1"># write output parameters (only one, in our case)</span>
+<span class="k">if</span> <span class="n">output_param_file</span><span class="p">:</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;out1&#39;</span><span class="p">:</span> <span class="n">out_file</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_param_file</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>As you can see, in a “classical” workflow, <code class="docutils literal notranslate"><span class="pre">job2</span></code> would not have known which file to print in its <code class="docutils literal notranslate"><span class="pre">cat</span></code> command. Using this “dynamic” parameters structure, it can work.</p>
+</div>
+<div class="section" id="dynamic-outputs-and-file-transfers">
+<h3><a class="toc-backref" href="#id11">Dynamic outputs and file transfers</a><a class="headerlink" href="#dynamic-outputs-and-file-transfers" title="Permalink to this headline">¶</a></h3>
+<p>When a file name is an output of a job (the job decides where to write its output file), and this output file should be transfered from the computing resource to the client machine, then a FileTransfer object should be created (as usual), but with some little additional things to setup:</p>
+<ul class="simple">
+<li><p>The FileTransfer object should be added both to the <code class="docutils literal notranslate"><span class="pre">referenced_output_files</span></code> parameter of jobs (as usual), and to the named parameters (<code class="docutils literal notranslate"><span class="pre">param_dict</span></code>) in order to tell how the FileTransfer object should be updated from the output JSON file of the job.</p></li>
+<li><p>The FileTransfer cannot know its paths (both client and server side) before the job runs.</p></li>
+<li><p>A client path has to be built after the job outputs tells which is the engine path. There is not absolute correct way to build it, it’s a heuristic since we have no reference client directory in the general case.</p></li>
+<li><p>To help this, we may use an additional job named parameter in the <code class="docutils literal notranslate"><span class="pre">param_dict</span></code>: <code class="docutils literal notranslate"><span class="pre">output_directory</span></code>, which will be used as a basis for client paths building.</p></li>
+<li><p>Otherwise Soma-Workflow will try to guess a client directory from other job parameters. This will not work in all situations.</p></li>
+</ul>
+<p>Ex:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">toutp</span> <span class="o">=</span> <span class="n">FileTransfer</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="s1">&#39;job1_output&#39;</span><span class="p">)</span>
+<span class="n">job1</span> <span class="o">=</span> <span class="n">Job</span><span class="p">(</span>
+    <span class="n">command</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;my_program&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%(in1)s</span><span class="s1">&#39;</span><span class="p">],</span>
+    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;job1:cp&#39;</span><span class="p">,</span>
+    <span class="n">param_dict</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;in1&#39;</span><span class="p">:</span> <span class="s1">&#39;/tmp/input_file&#39;</span><span class="p">,</span>
+                <span class="c1"># this is an output FileTransfer param mathcing the</span>
+                <span class="c1"># job ourput json dict</span>
+                <span class="s1">&#39;out1&#39;</span><span class="p">:</span> <span class="n">toutp</span><span class="p">,</span>
+                <span class="c1"># this is a hint to where to write the client output file</span>
+                <span class="s1">&#39;output_directory&#39;</span><span class="p">:</span> <span class="s1">&#39;/tmp&#39;</span><span class="p">},</span>
+    <span class="n">has_outputs</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">referenced_output_files</span><span class="o">=</span><span class="p">[</span><span class="n">toutp</span><span class="p">])</span>
+<span class="n">job2</span> <span class="o">=</span> <span class="n">swc</span><span class="o">.</span><span class="n">Job</span><span class="p">(</span>
+    <span class="n">command</span><span class="o">=</span><span class="p">[</span><span class="n">sys</span><span class="o">.</span><span class="n">executable</span><span class="p">,</span> <span class="n">inp</span><span class="p">,</span> <span class="s1">&#39;job2_run&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%(in1)s</span><span class="s1">&#39;</span><span class="p">],</span>
+    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;job2:cat&#39;</span><span class="p">,</span>
+    <span class="n">param_dict</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;in1&#39;</span><span class="p">:</span> <span class="n">toutp</span><span class="p">},</span>
+    <span class="n">referenced_input_files</span><span class="o">=</span><span class="n">ref_outp</span><span class="p">)</span>
+<span class="n">workflow</span> <span class="o">=</span> <span class="n">swc</span><span class="o">.</span><span class="n">Workflow</span><span class="p">(</span><span class="n">jobs</span><span class="o">=</span><span class="p">[</span><span class="n">job1</span><span class="p">,</span> <span class="n">job2</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;test_out_wf&#39;</span><span class="p">,</span>
+                        <span class="n">param_links</span><span class="o">=</span><span class="p">{</span><span class="n">job2</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;in1&#39;</span><span class="p">:</span> <span class="p">[(</span><span class="n">job1</span><span class="p">,</span> <span class="s1">&#39;out1&#39;</span><span class="p">)]}})</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="job-input-parameters-as-file">
+<span id="input-params-file"></span><h3><a class="toc-backref" href="#id12">Job input parameters as file</a><a class="headerlink" href="#job-input-parameters-as-file" title="Permalink to this headline">¶</a></h3>
+<p>When job parameters are specified through a dictionary of named parameters, it is also possible to pass the parameters set as a JSON file, rather than on commandline arguments. This may prove useful when the parameters list is long.</p>
+<p>In this situation the job must declare it using the <code class="docutils literal notranslate"><span class="pre">use_input_params_file</span></code> variable in Job. Then a temporary file will be created before the job is run. The parameters file is a JSON file containing a dictionary. The first level of this dict currently only contains the key <code class="docutils literal notranslate"><span class="pre">&quot;parameters&quot;</span></code>, but will be able to hold job configuration in the future. The <code class="docutils literal notranslate"><span class="pre">parameters</span></code> sub-dict is the input parameters of the job.</p>
+<p>The input parameters fils location is specified through an environment variable: <code class="docutils literal notranslate"><span class="pre">SOMAWF_INPUT_PARAMS</span></code>, and the job program should read it to get its actual arguments.</p>
+<p>Ex:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">soma_workflow.client</span> <span class="kn">import</span> <span class="n">Job</span><span class="p">,</span> <span class="n">Workflow</span><span class="p">,</span> <span class="n">WorkflowController</span>
+
+<span class="c1"># workflow definition</span>
+
+<span class="n">job1</span> <span class="o">=</span> <span class="n">Job</span><span class="p">(</span>
+    <span class="n">command</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;my_program&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%(in1)s</span><span class="s1">&#39;</span><span class="p">],</span>
+    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;job1:cp&#39;</span><span class="p">,</span>
+    <span class="n">param_dict</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;in1&#39;</span><span class="p">:</span> <span class="s1">&#39;/tmp/input_file&#39;</span><span class="p">},</span>
+    <span class="n">has_outputs</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">job3</span> <span class="o">=</span> <span class="n">Job</span><span class="p">(</span>
+    <span class="n">command</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;my_cat_program&#39;</span><span class="p">],</span>  <span class="c1"># no parameters on the commandline</span>
+    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;job2:cat&#39;</span><span class="p">,</span>
+    <span class="n">param_dict</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;in1&#39;</span><span class="p">:</span> <span class="s1">&#39;undefined&#39;</span><span class="p">},</span>
+    <span class="n">use_input_params_file</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># tell SWF to write the params file</span>
+<span class="n">workflow2</span> <span class="o">=</span> <span class="n">Workflow</span><span class="p">(</span><span class="n">jobs</span><span class="o">=</span><span class="p">[</span><span class="n">job1</span><span class="p">,</span> <span class="n">job3</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;test_workflow&#39;</span><span class="p">,</span>
+                     <span class="n">param_links</span><span class="o">=</span><span class="p">{</span><span class="n">job3</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;in1&#39;</span><span class="p">:</span> <span class="p">[(</span><span class="n">job1</span><span class="p">,</span> <span class="s1">&#39;out1&#39;</span><span class="p">)]}})</span>
+
+<span class="c1"># running it is the classical way</span>
+<span class="c1"># (or using soma_workflow_gui)</span>
+
+<span class="n">wc</span> <span class="o">=</span> <span class="n">WorkflowController</span><span class="p">()</span>
+<span class="n">wf_id</span> <span class="o">=</span> <span class="n">wc</span><span class="o">.</span><span class="n">submit_workflow</span><span class="p">(</span><span class="n">workflow2</span><span class="p">)</span>
+<span class="n">wc</span><span class="o">.</span><span class="n">wait_workflow</span><span class="p">(</span><span class="n">wf_id</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Here <code class="docutils literal notranslate"><span class="pre">job3</span></code> must be modified to make it able to read the parameters file. In this example we call a program named <code class="docutils literal notranslate"><span class="pre">my_cat_program</span></code>, which, if written in Python language, could look like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">json</span>
+
+<span class="c1"># get the input pams file location from env variable</span>
+<span class="n">param_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;SOMAWF_INPUT_PARAMS&#39;</span><span class="p">)</span>
+<span class="c1"># read it</span>
+<span class="n">params</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">param_file</span><span class="p">))</span>
+<span class="c1"># now get our specific parameter(s)</span>
+<span class="n">in_file</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;parameters&#39;</span><span class="p">][</span><span class="s1">&#39;in1&#39;</span><span class="p">]</span>
+<span class="c1"># now the &quot;real&quot; job code just prints the file:</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">in_file</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="parameters-link-functions">
+<span id="params-link-functions"></span><h3><a class="toc-backref" href="#id13">Parameters link functions</a><a class="headerlink" href="#parameters-link-functions" title="Permalink to this headline">¶</a></h3>
+<p>To implement some classical schemas such as map/reduce or cross-validation patterns, we need to transform parameters values which are lists into a series of single values, each passed to a job, for instance. To do this, Soma-Workflow allows to specify link functions in <code class="docutils literal notranslate"><span class="pre">param_links</span></code>. Such functions are called when building a job inputs before it runs (on engine side). Such functions are passed as an additional item in the link tuple, and may be strings (function definition, including module if appropriate), or a tuple containing a string (function definition) and arguments passed to it:</p>
+<p>Ex:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">param_links</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">dest_job1</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;dest_param1&#39;</span><span class="p">:</span> <span class="p">[(</span><span class="n">src_job1</span><span class="p">,</span> <span class="s1">&#39;src_output_param1&#39;</span><span class="p">,</span>
+                        <span class="s1">&#39;link_module.link_function&#39;</span><span class="p">)],</span>
+        <span class="s1">&#39;dest_param2&#39;</span><span class="p">:</span> <span class="p">[(</span><span class="n">src_job2</span><span class="p">,</span> <span class="s1">&#39;src_output_param2&#39;</span><span class="p">,</span>
+                        <span class="p">(</span><span class="s1">&#39;link_module.link_function&#39;</span><span class="p">,</span> <span class="mi">3</span><span class="p">))],</span>
+    <span class="p">},</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Arguments, if used, are passed in the function as first parameters, and may be used to specify a counter or identifier for the linked job. Functions are then called using 4 additional arguments: source parameter name, source parameter value, destination parameter name, destination parameter current value. The function should return the new destination parameter value. The destination parameter current value is useful in some cases, for instance to build a list from several source links (reduce pattern).</p>
+<p>A few functions are directly available in Soma-Workflow, in the module <a class="reference internal" href="#module-param_link_functions" title="param_link_functions"><code class="xref py py-mod docutils literal notranslate"><span class="pre">param_link_functions</span></code></a>, to help implementing classical algorithmic patterns:
+<a class="reference internal" href="#param_link_functions.list_to_sequence" title="param_link_functions.list_to_sequence"><code class="xref py py-func docutils literal notranslate"><span class="pre">list_to_sequence()</span></code></a>, <a class="reference internal" href="#param_link_functions.sequence_to_list" title="param_link_functions.sequence_to_list"><code class="xref py py-func docutils literal notranslate"><span class="pre">sequence_to_list()</span></code></a>, <a class="reference internal" href="#param_link_functions.list_all_but_one" title="param_link_functions.list_all_but_one"><code class="xref py py-func docutils literal notranslate"><span class="pre">list_all_but_one()</span></code></a>, <a class="reference internal" href="#param_link_functions.list_cv_train_fold" title="param_link_functions.list_cv_train_fold"><code class="xref py py-func docutils literal notranslate"><span class="pre">list_cv_train_fold()</span></code></a>, <a class="reference internal" href="#param_link_functions.list_cv_test_fold" title="param_link_functions.list_cv_test_fold"><code class="xref py py-func docutils literal notranslate"><span class="pre">list_cv_test_fold()</span></code></a>.</p>
+<p>Custom functions may be used, as long as their module is specified, with the additional constraint that the custom functions modules should be installed on engine side on the computing resource.</p>
+<p>Note that this parameters links transformations are the reason why links are lists and not single values: intuitively one may think that a job parameter value is linked from a single job output value, but when dealing with lists, the situatioon may differ: a list can be built from several outputs.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>aternative: Engine execution jobs</p>
+<p>An alternative to parameters link functions ias also available in Soma-Workflow 3.1 and later: <a class="reference internal" href="#engine-execution-job"><span class="std std-ref">Engine execution jobs</span></a>. They are more convenient to use in some situations, and less in others, so a workflow developer may choose the implementation he prefers.</p>
+</div>
+<p>A cross-validation pattern example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># let&#39;s say job1 inputs a list and outputs another list, &#39;outputs&#39;</span>
+<span class="n">job1</span> <span class="o">=</span> <span class="n">Job</span><span class="p">(</span>
+    <span class="n">command</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;my_program&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%(inputs)s</span><span class="s1">&#39;</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;prepare_inputs&#39;</span><span class="p">,</span>
+    <span class="n">param_dict</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;inputs&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;file1&#39;</span><span class="p">,</span> <span class="s1">&#39;file2&#39;</span><span class="p">,</span> <span class="s1">&#39;file3&#39;</span><span class="p">,</span> <span class="s1">&#39;file4&#39;</span><span class="p">,</span> <span class="s1">&#39;file5&#39;</span><span class="p">]},</span>
+    <span class="n">has_outputs</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="c1"># train_jobs are identical train jobs training folds (we use 3 folds)</span>
+<span class="c1"># they output a single file, &#39;output&#39;</span>
+<span class="c1"># test_jobs are identical test jobs testing the test part of each fold</span>
+<span class="c1"># they also output a single file, &#39;output&#39;</span>
+<span class="n">nfolds</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">train_jobs</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">test_jobs</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">fold</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nfolds</span><span class="p">):</span>
+    <span class="n">job_train</span> <span class="o">=</span> <span class="n">Job</span><span class="p">(</span>
+        <span class="n">command</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;train_model&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%(inputs)s</span><span class="s1">&#39;</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;train_fold</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">fold</span><span class="p">,</span>
+        <span class="n">param_dict</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;inputs&#39;</span><span class="p">,</span> <span class="p">[]},</span> <span class="n">has_outputs</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">train_jobs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">job_train</span><span class="p">)</span>
+    <span class="n">job_test</span> <span class="o">=</span> <span class="n">Job</span><span class="p">(</span>
+        <span class="n">command</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;test_model&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%(inputs)s</span><span class="s1">&#39;</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;test_fold</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">fold</span><span class="p">,</span>
+        <span class="n">param_dict</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;inputs&#39;</span><span class="p">,</span> <span class="p">[]},</span> <span class="n">has_outputs</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">test_jobs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">job_test</span><span class="p">)</span>
+<span class="c1"># building the workflow</span>
+<span class="n">jobs</span> <span class="o">=</span> <span class="p">[</span><span class="n">job1</span><span class="p">]</span> <span class="o">+</span> <span class="n">train_jobs</span> <span class="o">+</span> <span class="n">test_jobs</span>
+
+<span class="n">dependencies</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">links</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">for</span> <span class="n">fold</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nfolds</span><span class="p">):</span>
+    <span class="n">links</span><span class="p">[</span><span class="n">train_jobs</span><span class="p">[</span><span class="n">fold</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;inputs&#39;</span><span class="p">:</span> <span class="p">[(</span><span class="n">job1</span><span class="p">,</span> <span class="s1">&#39;outputs&#39;</span><span class="p">,</span>
+                   <span class="p">(</span><span class="s1">&#39;list_cv_train_fold&#39;</span><span class="p">,</span> <span class="n">fold</span><span class="p">,</span> <span class="n">nfolds</span><span class="p">))]}</span>
+    <span class="n">links</span><span class="p">[</span><span class="n">test_jobs</span><span class="p">[</span><span class="n">fold</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;inputs&#39;</span><span class="p">:</span> <span class="p">[(</span><span class="n">job1</span><span class="p">,</span> <span class="s1">&#39;outputs&#39;</span><span class="p">,</span>
+                   <span class="p">(</span><span class="s1">&#39;list_cv_test_fold&#39;</span><span class="p">,</span> <span class="n">fold</span><span class="p">,</span> <span class="n">nfolds</span><span class="p">))]}</span>
+
+<span class="n">workflow</span> <span class="o">=</span> <span class="n">Workflow</span><span class="p">(</span><span class="n">jobs</span><span class="p">,</span>
+                    <span class="n">dependencies</span><span class="p">,</span>
+                    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;train CV&#39;</span><span class="p">,</span> <span class="n">param_links</span><span class="o">=</span><span class="n">links</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>A leave-one-out pattern example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># let&#39;s say job1 inputs a list and outputs another list, &#39;outputs&#39;</span>
+<span class="n">job1</span> <span class="o">=</span> <span class="n">Job</span><span class="p">(</span>
+    <span class="n">command</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;my_program&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%(inputs)s</span><span class="s1">&#39;</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;prepare_inputs&#39;</span><span class="p">,</span>
+    <span class="n">param_dict</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;inputs&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;file1&#39;</span><span class="p">,</span> <span class="s1">&#39;file2&#39;</span><span class="p">,</span> <span class="s1">&#39;file3&#39;</span><span class="p">,</span> <span class="s1">&#39;file4&#39;</span><span class="p">,</span> <span class="s1">&#39;file5&#39;</span><span class="p">]},</span>
+    <span class="n">has_outputs</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="c1"># train_jobs are identical train jobs training folds</span>
+<span class="c1"># they output a single file, &#39;output&#39;</span>
+<span class="c1"># test_jobs are identical test jobs testing the single leftover file of</span>
+<span class="c1"># each fold. They also output a single file, &#39;output&#39;</span>
+<span class="n">nfolds</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">job1</span><span class="o">.</span><span class="n">param_dict</span><span class="p">[</span><span class="s1">&#39;inputs&#39;</span><span class="p">])</span>
+<span class="n">train_jobs</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">test_jobs</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">fold</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nfolds</span><span class="p">):</span>
+    <span class="n">job_train</span> <span class="o">=</span> <span class="n">Job</span><span class="p">(</span>
+        <span class="n">command</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;train_model&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%(inputs)s</span><span class="s1">&#39;</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;train_fold</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">fold</span><span class="p">,</span>
+        <span class="n">param_dict</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;inputs&#39;</span><span class="p">,</span> <span class="p">[]},</span> <span class="n">has_outputs</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">train_jobs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">job_train</span><span class="p">)</span>
+    <span class="n">job_test</span> <span class="o">=</span> <span class="n">Job</span><span class="p">(</span>
+        <span class="n">command</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;test_model&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%(input)s</span><span class="s1">&#39;</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;test_fold</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">fold</span><span class="p">,</span>
+        <span class="n">param_dict</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;input&#39;</span><span class="p">,</span> <span class="s1">&#39;undefined&#39;</span><span class="p">},</span> <span class="n">has_outputs</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">test_jobs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">job_test</span><span class="p">)</span>
+<span class="c1"># building the workflow</span>
+<span class="n">jobs</span> <span class="o">=</span> <span class="p">[</span><span class="n">job1</span><span class="p">]</span> <span class="o">+</span> <span class="n">train_jobs</span> <span class="o">+</span> <span class="n">test_jobs</span>
+
+<span class="n">dependencies</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">links</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">for</span> <span class="n">fold</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nfolds</span><span class="p">):</span>
+    <span class="n">links</span><span class="p">[</span><span class="n">train_jobs</span><span class="p">[</span><span class="n">fold</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;inputs&#39;</span><span class="p">:</span> <span class="p">[(</span><span class="n">job1</span><span class="p">,</span> <span class="s1">&#39;outputs&#39;</span><span class="p">,</span>
+                   <span class="p">(</span><span class="s1">&#39;list_all_but_one&#39;</span><span class="p">,</span> <span class="n">fold</span><span class="p">))]}</span>
+    <span class="n">links</span><span class="p">[</span><span class="n">test_jobs</span><span class="p">[</span><span class="n">fold</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;inputs&#39;</span><span class="p">:</span> <span class="p">[(</span><span class="n">job1</span><span class="p">,</span> <span class="s1">&#39;outputs&#39;</span><span class="p">,</span>
+                   <span class="p">(</span><span class="s1">&#39;list_to_sequence&#39;</span><span class="p">,</span> <span class="n">fold</span><span class="p">))]}</span>
+
+<span class="n">workflow</span> <span class="o">=</span> <span class="n">Workflow</span><span class="p">(</span><span class="n">jobs</span><span class="p">,</span>
+                    <span class="n">dependencies</span><span class="p">,</span>
+                    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;train LOO&#39;</span><span class="p">,</span> <span class="n">param_links</span><span class="o">=</span><span class="n">links</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>A map / reduce example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># let&#39;s say job1 inputs a list and outputs another list, &#39;outputs&#39;</span>
+<span class="n">job1</span> <span class="o">=</span> <span class="n">Job</span><span class="p">(</span>
+    <span class="n">command</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;my_program&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%(inputs)s</span><span class="s1">&#39;</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;prepare_inputs&#39;</span><span class="p">,</span>
+    <span class="n">param_dict</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;inputs&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;file1&#39;</span><span class="p">,</span> <span class="s1">&#39;file2&#39;</span><span class="p">,</span> <span class="s1">&#39;file3&#39;</span><span class="p">,</span> <span class="s1">&#39;file4&#39;</span><span class="p">,</span> <span class="s1">&#39;file5&#39;</span><span class="p">]},</span>
+    <span class="n">has_outputs</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="c1"># process_jobs are identical train jobs processing one of the input files</span>
+<span class="c1"># they output a single file, &#39;output&#39;</span>
+<span class="n">nfolds</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">job1</span><span class="o">.</span><span class="n">param_dict</span><span class="p">[</span><span class="s1">&#39;inputs&#39;</span><span class="p">])</span>
+<span class="n">process_jobs</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">fold</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nfolds</span><span class="p">):</span>
+    <span class="n">job_proc</span> <span class="o">=</span> <span class="n">Job</span><span class="p">(</span>
+        <span class="n">command</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;process_data&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%(input)s</span><span class="s1">&#39;</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;process_</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">fold</span><span class="p">,</span>
+        <span class="n">param_dict</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;input&#39;</span><span class="p">,</span> <span class="s1">&#39;undefined&#39;</span><span class="p">},</span> <span class="n">has_outputs</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">process_jobs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">job_proc</span><span class="p">)</span>
+<span class="c1"># a reduce node takes outputs of all processing nodes and, for instance,</span>
+<span class="c1"># concatenates them</span>
+<span class="n">reduce_job</span> <span class="o">=</span> <span class="n">Job</span><span class="p">(</span>
+    <span class="n">command</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;cat_program&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%(inputs)s</span><span class="s1">&#39;</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;cat_results&#39;</span><span class="p">,</span>
+    <span class="n">param_dict</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;inputs&#39;</span><span class="p">:</span> <span class="p">[],</span> <span class="s1">&#39;outputs&#39;</span><span class="p">:</span> <span class="s1">&#39;file_output&#39;</span><span class="p">})</span>
+
+<span class="c1"># building the workflow</span>
+<span class="n">group_1</span> <span class="o">=</span> <span class="n">Group</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;processing&#39;</span><span class="p">,</span> <span class="n">elements</span><span class="o">=</span><span class="n">process_jobs</span><span class="p">)</span>
+<span class="n">jobs</span> <span class="o">=</span> <span class="p">[</span><span class="n">job1</span><span class="p">]</span> <span class="o">+</span> <span class="n">process_jobs</span> <span class="o">+</span> <span class="p">[</span><span class="n">reduce_job</span><span class="p">]</span>
+<span class="n">dependencies</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">links</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">links</span><span class="p">[</span><span class="n">reduce_job</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;inputs&#39;</span><span class="p">:</span> <span class="p">[]}</span>
+<span class="k">for</span> <span class="n">fold</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nfolds</span><span class="p">):</span>
+    <span class="n">links</span><span class="p">[</span><span class="n">process_jobs</span><span class="p">[</span><span class="n">fold</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;inputs&#39;</span><span class="p">:</span> <span class="p">[(</span><span class="n">job1</span><span class="p">,</span> <span class="s1">&#39;outputs&#39;</span><span class="p">,</span>
+                   <span class="p">(</span><span class="s1">&#39;list_to_sequence&#39;</span><span class="p">,</span> <span class="n">fold</span><span class="p">))]}</span>
+    <span class="n">links</span><span class="p">[</span><span class="n">reduce_job</span><span class="p">][</span><span class="s1">&#39;inputs&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">process_job</span><span class="p">[</span><span class="n">fold</span><span class="p">],</span> <span class="s1">&#39;output&#39;</span><span class="p">,</span>
+                                        <span class="p">(</span><span class="s1">&#39;sequence_to_list&#39;</span><span class="p">,</span> <span class="n">fold</span><span class="p">)))</span>
+
+<span class="n">workflow</span> <span class="o">=</span> <span class="n">Workflow</span><span class="p">(</span><span class="n">jobs</span><span class="p">,</span>
+                    <span class="n">root_group</span><span class="o">=</span><span class="p">[</span><span class="n">job1</span><span class="p">,</span> <span class="n">group_1</span><span class="p">,</span> <span class="n">reduce_job</span><span class="p">],</span>
+                    <span class="n">dependencies</span><span class="p">,</span>
+                    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;map-reduce&#39;</span><span class="p">,</span> <span class="n">param_links</span><span class="o">=</span><span class="n">links</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="section" id="module-param_link_functions">
+<span id="param-link-functions-module"></span><h4><a class="toc-backref" href="#id14">param_link_functions module</a><a class="headerlink" href="#module-param_link_functions" title="Permalink to this headline">¶</a></h4>
+<dl class="py function">
+<dt id="param_link_functions.append_to_list">
+<code class="sig-prename descclassname">param_link_functions.</code><code class="sig-name descname">append_to_list</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">src_param</span></em>, <em class="sig-param"><span class="n">value</span></em>, <em class="sig-param"><span class="n">dst_param</span></em>, <em class="sig-param"><span class="n">dst_value</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/param_link_functions.html#append_to_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#param_link_functions.append_to_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>appends the value value at the end of list dst_value</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="param_link_functions.list_all_but_one">
+<code class="sig-prename descclassname">param_link_functions.</code><code class="sig-name descname">list_all_but_one</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">item</span></em>, <em class="sig-param"><span class="n">src_param</span></em>, <em class="sig-param"><span class="n">value</span></em>, <em class="sig-param"><span class="n">dst_param</span></em>, <em class="sig-param"><span class="n">dst_value</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/param_link_functions.html#list_all_but_one"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#param_link_functions.list_all_but_one" title="Permalink to this definition">¶</a></dt>
+<dd><p>remove item-th element from the input list.
+Useful in a leave-one-out pattern</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="param_link_functions.list_cat">
+<code class="sig-prename descclassname">param_link_functions.</code><code class="sig-name descname">list_cat</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">item</span></em>, <em class="sig-param"><span class="n">src_param</span></em>, <em class="sig-param"><span class="n">value</span></em>, <em class="sig-param"><span class="n">dst_param</span></em>, <em class="sig-param"><span class="n">dst_value</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/param_link_functions.html#list_cat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#param_link_functions.list_cat" title="Permalink to this definition">¶</a></dt>
+<dd><p>concatenates lists: extend value (list) after dst_value</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="param_link_functions.list_cv_test_fold">
+<code class="sig-prename descclassname">param_link_functions.</code><code class="sig-name descname">list_cv_test_fold</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fold</span></em>, <em class="sig-param"><span class="n">nfolds</span></em>, <em class="sig-param"><span class="n">src_param</span></em>, <em class="sig-param"><span class="n">value</span></em>, <em class="sig-param"><span class="n">dst_param</span></em>, <em class="sig-param"><span class="n">dst_value</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/param_link_functions.html#list_cv_test_fold"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#param_link_functions.list_cv_test_fold" title="Permalink to this definition">¶</a></dt>
+<dd><p>take fold-th division in a list divided into nfold folds.
+Useful in a nfolds cross-validation pattern</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="param_link_functions.list_cv_train_fold">
+<code class="sig-prename descclassname">param_link_functions.</code><code class="sig-name descname">list_cv_train_fold</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fold</span></em>, <em class="sig-param"><span class="n">nfolds</span></em>, <em class="sig-param"><span class="n">src_param</span></em>, <em class="sig-param"><span class="n">value</span></em>, <em class="sig-param"><span class="n">dst_param</span></em>, <em class="sig-param"><span class="n">dst_value</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/param_link_functions.html#list_cv_train_fold"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#param_link_functions.list_cv_train_fold" title="Permalink to this definition">¶</a></dt>
+<dd><p>take all but fold-th division in a list divided into nfold folds.
+Useful in a nfolds cross-validation pattern</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="param_link_functions.list_to_sequence">
+<code class="sig-prename descclassname">param_link_functions.</code><code class="sig-name descname">list_to_sequence</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">item</span></em>, <em class="sig-param"><span class="n">src_param</span></em>, <em class="sig-param"><span class="n">value</span></em>, <em class="sig-param"><span class="n">dst_param</span></em>, <em class="sig-param"><span class="n">dst_value</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/param_link_functions.html#list_to_sequence"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#param_link_functions.list_to_sequence" title="Permalink to this definition">¶</a></dt>
+<dd><p>item-th element of list value</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="param_link_functions.sequence_to_list">
+<code class="sig-prename descclassname">param_link_functions.</code><code class="sig-name descname">sequence_to_list</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">item</span></em>, <em class="sig-param"><span class="n">src_param</span></em>, <em class="sig-param"><span class="n">value</span></em>, <em class="sig-param"><span class="n">dst_param</span></em>, <em class="sig-param"><span class="n">dst_value</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/param_link_functions.html#sequence_to_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#param_link_functions.sequence_to_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>set the value value as item-th element of list dst_value</p>
+</dd></dl>
+
+</div>
+</div>
+</div>
+<div class="section" id="jobs-with-configuration">
+<span id="jobs-with-conf"></span><h2><a class="toc-backref" href="#id15">Jobs with configuration</a><a class="headerlink" href="#jobs-with-configuration" title="Permalink to this headline">¶</a></h2>
+<p>In Soma-Workflow 3.1 any job in a workflow is allowed to include some runtime configuration data. This is meant especially to enable the use of specific software which needs configuration, paths, or environment variables on the computing resource. This conficuration may of course be passed through environment variables (using the <code class="docutils literal notranslate"><span class="pre">env</span></code> variable / parameter of <code class="xref py py-class docutils literal notranslate"><span class="pre">Job</span></code>, but also as a config dictionary which will be passed th the job.</p>
+<p>The job configuration is included in the job parameters as in the <a class="reference internal" href="#dynamic-outputs"><span class="std std-ref">dynamic output / input arguments passing system</span></a>. This thus allows 2 ways of passing the config dict to jobs:</p>
+<ul>
+<li><p>as a named job parameter, <cite>configuration_dict</cite>. In this case this named parameter is reserved for configuration. It is used as another named parameter in the job:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">job</span> <span class="o">=</span> <span class="n">Job</span><span class="p">(</span><span class="n">command</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;my_program&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%(configuration_dict)s</span><span class="s1">&#39;</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;job1&#39;</span><span class="p">,</span>
+    <span class="n">configuration</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;conf_var1&#39;</span><span class="p">:</span> <span class="s1">&#39;value1&#39;</span><span class="p">})</span>
+</pre></div>
+</div>
+<p>The job will receive the configuration as a JSON string parameter</p>
+</li>
+<li><p>as a part of a parameters file. In this case the parameters file will be created before the job is run, even if the job does not use the outputs from another job, and the conficuration will be held in a sub-dictionary of this input JSON file, under the key <code class="docutils literal notranslate"><span class="pre">&quot;configuration_dict&quot;</span></code>, separate from the <code class="docutils literal notranslate"><span class="pre">&quot;params&quot;</span></code> key. Therefore in this shape, <code class="docutils literal notranslate"><span class="pre">configuration_dict</span></code> is not a reserved parameter name:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">job</span> <span class="o">=</span> <span class="n">Job</span><span class="p">(</span><span class="n">command</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;my_program&#39;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;job1&#39;</span><span class="p">,</span> <span class="n">use_input_params_file</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">configuration</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;conf_var1&#39;</span><span class="p">:</span> <span class="s1">&#39;value1&#39;</span><span class="p">})</span>
+</pre></div>
+</div>
+<p>As in the dynamic parameters system, when the job is run, the environment variable <code class="docutils literal notranslate"><span class="pre">SOMAWF_INPUT_PARAMS</span></code> will hold the path of the input parameters / configuration file.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="engine-execution-jobs">
+<span id="engine-execution-job"></span><h2><a class="toc-backref" href="#id16">Engine execution jobs</a><a class="headerlink" href="#engine-execution-jobs" title="Permalink to this headline">¶</a></h2>
+<p>Soma-Workflow 3.1 introduced <a class="reference internal" href="#client_types.EngineExecutionJob" title="client_types.EngineExecutionJob"><code class="xref py py-class docutils literal notranslate"><span class="pre">EngineExecutionJob</span></code></a>. This class is the base class for some special jobs which will actually not run as jobs, but as python functions executed inside the engine process. They should be lightweight in processing, since the engine server should not have a heavy CPU load: it runs on the computing resource submitting machine (a cluster frontal typically) which is not designed to perform actual processing.</p>
+<p>Such jobs are meant to perform simple parameters transformations, such as transforming lists into series of single parameter values, or the opposite (map/reduce pattern), or string transformation (get a dirnname for instance) etc.</p>
+<p><a class="reference internal" href="#client_types.BarrierJob" title="client_types.BarrierJob"><code class="xref py py-class docutils literal notranslate"><span class="pre">BarrierJob</span></code></a> used to be the only “special job” class in Soma-Workflow 2.10. They are now a subclass of <a class="reference internal" href="#client_types.EngineExecutionJob" title="client_types.EngineExecutionJob"><code class="xref py py-class docutils literal notranslate"><span class="pre">EngineExecutionJob</span></code></a> with the particularity of <em>not</em> doing any processing even on engine side.</p>
+<p>A few engine execution jobs types have been defined and are available for workflow developers. Other subclasses can be written, but should be installed and available on engine side to work.</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#client_types.BarrierJob" title="client_types.BarrierJob"><code class="xref py py-class docutils literal notranslate"><span class="pre">BarrierJob</span></code></a>: just a dependency hub.</p></li>
+<li><p><a class="reference internal" href="#custom_jobs.MapJob" title="custom_jobs.MapJob"><code class="xref py py-class docutils literal notranslate"><span class="pre">MapJob</span></code></a>: <em>map</em> part of map/reduce pattern: transforms lists into series of single values parameters.</p></li>
+<li><p><a class="reference internal" href="#custom_jobs.ReduceJob" title="custom_jobs.ReduceJob"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReduceJob</span></code></a>: <em>reduce</em> part of map/reduce pattern: transforms series of single values parameters into list parameters.</p></li>
+<li><p><a class="reference internal" href="#custom_jobs.ListCatJob" title="custom_jobs.ListCatJob"><code class="xref py py-class docutils literal notranslate"><span class="pre">ListCatJob</span></code></a>: conctenates several input lists.</p></li>
+<li><p><a class="reference internal" href="#custom_jobs.LeaveOneOutJob" title="custom_jobs.LeaveOneOutJob"><code class="xref py py-class docutils literal notranslate"><span class="pre">LeaveOneOutJob</span></code></a>: leve-one-out pattern.</p></li>
+<li><p><a class="reference internal" href="#custom_jobs.CrossValidationFoldJob" title="custom_jobs.CrossValidationFoldJob"><code class="xref py py-class docutils literal notranslate"><span class="pre">CrossValidationFoldJob</span></code></a>: cross-validation pattern.</p></li>
+</ul>
+<p>Such jobs are alternatives to <a class="reference internal" href="#params-link-functions"><span class="std std-ref">Parameters link functions</span></a> described above.</p>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/logo_white_small.png" alt="Logo"/>
+            </a></p>
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Workflow creation API</a><ul>
+<li><a class="reference internal" href="#workflow">Workflow</a></li>
+<li><a class="reference internal" href="#group">Group</a></li>
+<li><a class="reference internal" href="#job">Job</a></li>
+<li><a class="reference internal" href="#filetransfer">FileTransfer</a></li>
+<li><a class="reference internal" href="#sharedresourcepath">SharedResourcePath</a></li>
+<li><a class="reference internal" href="#temporarypath">TemporaryPath</a></li>
+<li><a class="reference internal" href="#dynamic-output-parameters-values-in-soma-workflow">Dynamic output parameters values in Soma-Workflow</a><ul>
+<li><a class="reference internal" href="#using-dynamic-output-parameters">Using dynamic output parameters</a></li>
+<li><a class="reference internal" href="#dynamic-outputs-and-file-transfers">Dynamic outputs and file transfers</a></li>
+<li><a class="reference internal" href="#job-input-parameters-as-file">Job input parameters as file</a></li>
+<li><a class="reference internal" href="#parameters-link-functions">Parameters link functions</a><ul>
+<li><a class="reference internal" href="#module-param_link_functions">param_link_functions module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#jobs-with-configuration">Jobs with configuration</a></li>
+<li><a class="reference internal" href="#engine-execution-jobs">Engine execution jobs</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="status_list.html"
+                        title="previous chapter">Status list</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="client_API.html"
+                        title="next chapter">Python API</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/workflow_creation.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="client_API.html" title="Python API"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="status_list.html" title="Status list"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">soma-workflow version 3.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Workflow creation API</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2011-2021 CEA, Neurospin, France, CATI, France.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

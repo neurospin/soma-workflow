@@ -1,0 +1,167 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>param_link_functions &#8212; soma-workflow version 3.1 documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="shortcut icon" href="../_static/icon_small.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">soma-workflow version 3.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">param_link_functions</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for param_link_functions</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">print_function</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">traits.api</span> <span class="kn">import</span> <span class="n">Undefined</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="c1"># no traits: use None</span>
+    <span class="n">Undefined</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+<div class="viewcode-block" id="list_to_sequence"><a class="viewcode-back" href="../workflow_creation.html#param_link_functions.list_to_sequence">[docs]</a><span class="k">def</span> <span class="nf">list_to_sequence</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">src_param</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">dst_param</span><span class="p">,</span> <span class="n">dst_value</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; item-th element of list value</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">value</span><span class="p">[</span><span class="n">item</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="sequence_to_list"><a class="viewcode-back" href="../workflow_creation.html#param_link_functions.sequence_to_list">[docs]</a><span class="k">def</span> <span class="nf">sequence_to_list</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">src_param</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">dst_param</span><span class="p">,</span> <span class="n">dst_value</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; set the value value as item-th element of list dst_value</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">dst_value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">dst_value</span> <span class="o">=</span> <span class="p">[</span><span class="n">Undefined</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">item</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dst_value</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">item</span><span class="p">:</span>
+        <span class="n">dst_value</span> <span class="o">+=</span> <span class="p">[</span><span class="n">Undefined</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">item</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">dst_value</span><span class="p">))</span>
+    <span class="n">dst_value</span><span class="p">[</span><span class="n">item</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+    <span class="k">return</span> <span class="n">dst_value</span></div>
+
+
+<div class="viewcode-block" id="append_to_list"><a class="viewcode-back" href="../workflow_creation.html#param_link_functions.append_to_list">[docs]</a><span class="k">def</span> <span class="nf">append_to_list</span><span class="p">(</span><span class="n">src_param</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">dst_param</span><span class="p">,</span> <span class="n">dst_value</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; appends the value value at the end of list dst_value</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">dst_value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">dst_value</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">dst_value</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">dst_value</span></div>
+
+
+<div class="viewcode-block" id="list_all_but_one"><a class="viewcode-back" href="../workflow_creation.html#param_link_functions.list_all_but_one">[docs]</a><span class="k">def</span> <span class="nf">list_all_but_one</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">src_param</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">dst_param</span><span class="p">,</span> <span class="n">dst_value</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; remove item-th element from the input list.</span>
+<span class="sd">    Useful in a leave-one-out pattern</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">value</span><span class="p">[:</span><span class="n">item</span><span class="p">]</span> <span class="o">+</span> <span class="n">value</span><span class="p">[</span><span class="n">item</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]</span></div>
+
+
+<div class="viewcode-block" id="list_cv_train_fold"><a class="viewcode-back" href="../workflow_creation.html#param_link_functions.list_cv_train_fold">[docs]</a><span class="k">def</span> <span class="nf">list_cv_train_fold</span><span class="p">(</span><span class="n">fold</span><span class="p">,</span> <span class="n">nfolds</span><span class="p">,</span> <span class="n">src_param</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">dst_param</span><span class="p">,</span> <span class="n">dst_value</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; take all but fold-th division in a list divided into nfold folds.</span>
+<span class="sd">    Useful in a nfolds cross-validation pattern</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">nitems</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="n">fold_size</span> <span class="o">=</span> <span class="n">nitems</span> <span class="o">//</span> <span class="n">nfolds</span>
+    <span class="n">nsupp</span> <span class="o">=</span> <span class="n">nitems</span> <span class="o">%</span> <span class="n">nfolds</span>
+    <span class="n">begin</span> <span class="o">=</span> <span class="n">fold_size</span> <span class="o">*</span> <span class="n">fold</span>
+    <span class="n">begin</span> <span class="o">+=</span> <span class="nb">min</span><span class="p">(</span><span class="n">begin</span><span class="p">,</span> <span class="n">nsupp</span><span class="p">)</span>
+    <span class="n">end</span> <span class="o">=</span> <span class="n">fold_size</span> <span class="o">*</span> <span class="p">(</span><span class="n">fold</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">end</span> <span class="o">+=</span> <span class="nb">min</span><span class="p">(</span><span class="n">end</span><span class="p">,</span> <span class="n">nsupp</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">value</span><span class="p">[:</span><span class="n">begin</span><span class="p">]</span> <span class="o">+</span> <span class="n">value</span><span class="p">[</span><span class="n">end</span><span class="p">:]</span></div>
+
+
+<div class="viewcode-block" id="list_cv_test_fold"><a class="viewcode-back" href="../workflow_creation.html#param_link_functions.list_cv_test_fold">[docs]</a><span class="k">def</span> <span class="nf">list_cv_test_fold</span><span class="p">(</span><span class="n">fold</span><span class="p">,</span> <span class="n">nfolds</span><span class="p">,</span> <span class="n">src_param</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">dst_param</span><span class="p">,</span> <span class="n">dst_value</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; take fold-th division in a list divided into nfold folds.</span>
+<span class="sd">    Useful in a nfolds cross-validation pattern</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">nitems</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="n">fold_size</span> <span class="o">=</span> <span class="n">nitems</span> <span class="o">//</span> <span class="n">nfolds</span>
+    <span class="n">nsupp</span> <span class="o">=</span> <span class="n">nitems</span> <span class="o">%</span> <span class="n">nfolds</span>
+    <span class="n">begin</span> <span class="o">=</span> <span class="n">fold_size</span> <span class="o">*</span> <span class="n">fold</span>
+    <span class="n">begin</span> <span class="o">+=</span> <span class="nb">min</span><span class="p">(</span><span class="n">begin</span><span class="p">,</span> <span class="n">nsupp</span><span class="p">)</span>
+    <span class="n">end</span> <span class="o">=</span> <span class="n">fold_size</span> <span class="o">*</span> <span class="p">(</span><span class="n">fold</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">end</span> <span class="o">+=</span> <span class="nb">min</span><span class="p">(</span><span class="n">end</span><span class="p">,</span> <span class="n">nsupp</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">value</span><span class="p">[</span><span class="n">begin</span><span class="p">:</span><span class="n">end</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="list_cat"><a class="viewcode-back" href="../workflow_creation.html#param_link_functions.list_cat">[docs]</a><span class="k">def</span> <span class="nf">list_cat</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">src_param</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">dst_param</span><span class="p">,</span> <span class="n">dst_value</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; concatenates lists: extend value (list) after dst_value</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">dst_value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">dst_value</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">dst_value</span> <span class="o">+=</span> <span class="n">value</span>
+    <span class="k">return</span> <span class="n">dst_value</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/logo_white_small.png" alt="Logo"/>
+            </a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">soma-workflow version 3.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">param_link_functions</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2011-2021 CEA, Neurospin, France, CATI, France.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,11 @@
+<map id="inheritance1549f84022" name="inheritance1549f84022">
+<area shape="rect" id="node1" href="#client_types.BarrierJob" target="_top" title="Barrier job: it is a &quot;fake&quot; job which does nothing (and will not become a" alt="" coords="361,5,445,31"/>
+<area shape="rect" id="node2" href="#client_types.EngineExecutionJob" target="_top" title="EngineExecutionJob: a lightweight job which will not run as a &quot;real&quot; job," alt="" coords="125,153,272,179"/>
+<area shape="rect" id="node3" href="#custom_jobs.CrossValidationFoldJob" target="_top" title="Separates an input list into folds, one (larger) for training, one" alt="" coords="320,55,485,80"/>
+<area shape="rect" id="node5" href="#custom_jobs.LeaveOneOutJob" target="_top" title="Removes an element from an input list, outputs it on a single separate" alt="" coords="339,104,467,129"/>
+<area shape="rect" id="node6" href="#custom_jobs.ListCatJob" target="_top" title="Concatenates several lists into a single list" alt="" coords="360,153,445,179"/>
+<area shape="rect" id="node7" href="#custom_jobs.MapJob" target="_top" title="Map job: converts lists into series of single items. Typically an input" alt="" coords="367,203,439,228"/>
+<area shape="rect" id="node8" href="#custom_jobs.ReduceJob" target="_top" title="Reduce job: converts series of inputs into lists. Typically a series of" alt="" coords="359,252,446,277"/>
+<area shape="rect" id="node9" href="#custom_jobs.StrCatJob" target="_top" title="Concatenates inputs into a string" alt="" coords="361,301,444,327"/>
+<area shape="rect" id="node4" href="#client_types.Job" target="_top" title="Job representation." alt="" coords="5,153,77,179"/>
+</map>

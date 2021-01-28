@@ -1,0 +1,312 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tips, Good Practices and Errors &#8212; soma-workflow version 3.1 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    
+    <link rel="shortcut icon" href="_static/icon_small.ico"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Status list" href="status_list.html" />
+    <link rel="prev" title="MPI workflow runner —beta—" href="MPI_workflow_runner.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="status_list.html" title="Status list"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="MPI_workflow_runner.html" title="MPI workflow runner —beta—"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">soma-workflow version 3.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Tips, Good Practices and Errors</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="tips-good-practices-and-errors">
+<span id="good-pratices-troubleshooting"></span><h1>Tips, Good Practices and Errors<a class="headerlink" href="#tips-good-practices-and-errors" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="tips">
+<h2>Tips<a class="headerlink" href="#tips" title="Permalink to this headline">¶</a></h2>
+<dl>
+<dt><strong>Use job priority</strong></dt><dd><p>Job priority is a new feature in version 2.1. The jobs have a new integer
+attribute named priority (see <a class="reference internal" href="workflow_creation.html#workflow-creation-api"><span class="std std-ref">Workflow creation API</span></a>).</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">low_priority_job</span> <span class="o">=</span> <span class="n">Job</span><span class="p">(</span><span class="n">command</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;program&quot;</span><span class="p">,</span> <span class="s2">&quot;argument&quot;</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;job 1&quot;</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="n">high_priority_job</span> <span class="o">=</span> <span class="n">Job</span><span class="p">(</span><span class="n">command</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;program&quot;</span><span class="p">,</span> <span class="s2">&quot;argument&quot;</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;job 2&quot;</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The priority is set to 0 by default. Its value is used by Soma-workflow to
+sort the jobs which are ready to be submitted. As a consequence, the jobs with
+higher priority are submitted first. Note that the dependencies between jobs
+defined in the workflow are always satisfied.</p>
+<p>Job priorities can be used, for example, to obtain intermediate results more
+quickly in a workflow:</p>
+<div class="figure align-default" id="id1">
+<a class="reference internal image-reference" href="_images/without_priority.png"><img alt="_images/without_priority.png" src="_images/without_priority.png" style="width: 468.99999999999994px; height: 191.79999999999998px;" /></a>
+<p class="caption"><span class="caption-text"><em>Without job priority: depending on the number of cpu available the
+tendency will be to execute all the “brain extraction” jobs, then all
+the “gray/white segmentation” jobs and so on. As a consequence, the result
+of the whole processing of the first subject will be available late in the
+workflow execution.</em></span><a class="headerlink" href="#id1" title="Permalink to this image">¶</a></p>
+</div>
+<div class="figure align-default" id="id2">
+<a class="reference internal image-reference" href="_images/with_priority.png"><img alt="_images/with_priority.png" src="_images/with_priority.png" style="width: 468.99999999999994px; height: 210.0px;" /></a>
+<p class="caption"><span class="caption-text"><em>With job priorities: the “sulci recognition” jobs have higher priority.
+Depending of the number of cpu available, the “sulci recognition” jobs will
+tend to be executed before all the “brain extraction” and
+“gray/white segmentation” jobs end. As a consequence, the result of the
+whole processing of the subject 1 will be available early in the workflow
+execution.</em></span><a class="headerlink" href="#id2" title="Permalink to this image">¶</a></p>
+</div>
+</dd>
+<dt><strong>Use native specification to access the full range of features of your cluster</strong></dt><dd><p>Some specific option/feature of your cluster might not be usable through the unified
+interface of Soma-workflow. The native specification string makes them available.</p>
+<p>For example, the native specification parameter can be used to specify the walltime of
+a job:</p>
+<blockquote>
+<div><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#Using a PBS cluster:</span>
+<span class="n">job</span> <span class="o">=</span> <span class="n">Job</span><span class="p">(</span><span class="n">command</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;program&quot;</span><span class="p">,</span> <span class="s2">&quot;argument&quot;</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;max one hour job&quot;</span><span class="p">,</span> <span class="n">native_specification</span><span class="o">=</span><span class="s2">&quot;-l walltime=01:00:00&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#Using a SGE cluster:</span>
+<span class="n">job</span> <span class="o">=</span> <span class="n">Job</span><span class="p">(</span><span class="n">command</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;program&quot;</span><span class="p">,</span> <span class="s2">&quot;argument&quot;</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;max one hour job&quot;</span><span class="p">,</span> <span class="n">native_specification</span><span class="o">=</span><span class="s2">&quot;-l h_rt=01:00:00&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>The main problem of native specification is that it makes jobs dependent of the
+resource which will be used for the execution (in the previous example the
+job created for the PBS cluster can not be used on the SGE cluster).
+<strong>To avoid this drawback</strong>, a default native configuration string can be
+configured for each resource and will be applied to every job submitted to the
+resource (see <a class="reference internal" href="install_config.html#conf-server-option"><span class="std std-ref">Configuration items optional on the server side:</span></a>).</p>
+</dd>
+<dt><strong>Avoid some typing</strong></dt><dd><p>A login and password are required when you connect to a remote computing
+resource.</p>
+</dd>
+</dl>
+<ul class="simple">
+<li><p>Configure an ssh authentication by RSA key to avoid typing your password in
+the GUI or worse, in a Python script.</p></li>
+<li><p>Configure a login for each remote computing resource in the
+configuration file of Soma-workflow (LOGIN configuration variable). The
+configured login will be used to prefill the GUI.</p></li>
+</ul>
+</div>
+<div class="section" id="good-practices-on-a-cluster">
+<h2>Good Practices on a cluster<a class="headerlink" href="#good-practices-on-a-cluster" title="Permalink to this headline">¶</a></h2>
+<dl>
+<dt><strong>Do not forget that computing resources have usually their own rules and are shared with other users</strong></dt><dd><p>Everything you do through Soma-workflow is done with your user id on the
+computing resource.</p>
+</dd>
+<dt><strong>Choose an appropriate queue to run your workflows depending on the job size.</strong></dt><dd><p>See <a class="reference internal" href="install_config.html#client-configuration"><span class="std std-ref">Configuration (Created automatically)</span></a> to configure the queues so that they will appear
+in the GUI.</p>
+</dd>
+<dt><strong>Use the queue limitation feature.</strong></dt><dd><p>Because workflows can contain a lot of jobs, it is very useful to limit the
+number of jobs which can be waiting in the queue at the same time. The are
+three main reasons to do so:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>It is a good practice not to saturate the queue with too many jobs. If
+you set up a limit and submit a workflow, the other users will be able to
+intercalate their own jobs. Since they will not have to wait for you 500
+jobs (or more) in the queue to see their own jobs running, you will not
+receive angry phone calls.</p></li>
+<li><p>On some computing resources, the limit is configured in the DRMS. If you
+try to submit a job while you already reached the limit it will produce an
+error.</p></li>
+<li><p>If you use the job priority feature, the effect of the priority you set
+will be more visible if a limitation is configured for the queue. Indeed,
+once submitted to the cluster the jobs can not be sorted anymore by
+priority.</p></li>
+</ul>
+</div></blockquote>
+<p>When a limit is set up, the jobs which are ready to be submitted but are
+waiting because the limit is reached have the status “pending” (see
+<a class="reference internal" href="status_list.html#status-list"><span class="std std-ref">Status list</span></a>). They are actually waiting in a queue internal to
+soma-workflow in which the jobs are sorted by priority.</p>
+<p>See <a class="reference internal" href="install_config.html#conf-server-option"><span class="std std-ref">Configuration items optional on the server side:</span></a> to set up the limitation.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The limitation of the number of job in a queue does not limit the
+number of job which can run in parallel. However, because the other users
+can intercalate their own jobs and because of the system delay, it can take
+more time to get all the jobs running.</p>
+</div>
+</dd>
+<dt><strong>One database per user.</strong></dt><dd><p>The soma-workflow will start one database when the user connects to the server.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="good-practices-in-general">
+<h2>Good Practices in general<a class="headerlink" href="#good-practices-in-general" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt><strong>Do not build workflows with too many short jobs.</strong></dt><dd><p>Depending on the system the time for the jobs to be submitted is variable
+and is usually not instantaneous. To take advantage of running your
+workflow in parallel, the jobs should not be too short: more than 1 minute
+usually.</p>
+</dd>
+<dt><strong>Open only one application at a time in the mono process mode.</strong></dt><dd><p>This will be fixed in a future version. It includes the use of Soma-workflow
+on a multiple core machine.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="errors">
+<h2>Errors<a class="headerlink" href="#errors" title="Permalink to this headline">¶</a></h2>
+<p>Here is the list of the various errors which can occur when using
+Soma-workflow.</p>
+<dl class="py class">
+<dt id="errors.ConfigurationError">
+<em class="property">class </em><code class="sig-prename descclassname">errors.</code><code class="sig-name descname">ConfigurationError</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">Exception</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/errors.html#ConfigurationError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#errors.ConfigurationError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Raised when the configuration is not correct or when configuration
+items are missing.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="errors.ConnectionError">
+<em class="property">class </em><code class="sig-prename descclassname">errors.</code><code class="sig-name descname">ConnectionError</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">Exception</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/errors.html#ConnectionError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#errors.ConnectionError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Raised when the connection could not be set up with the computing
+resource and/or the database server.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="errors.DRMError">
+<em class="property">class </em><code class="sig-prename descclassname">errors.</code><code class="sig-name descname">DRMError</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">Exception</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/errors.html#DRMError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#errors.DRMError" title="Permalink to this definition">¶</a></dt>
+<dd><p>DRMAA session error or DRMS error.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="errors.JobError">
+<em class="property">class </em><code class="sig-prename descclassname">errors.</code><code class="sig-name descname">JobError</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">Exception</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/errors.html#JobError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#errors.JobError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Raised when an incorrect Job is submitted to soma-workflow.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="errors.WorkflowError">
+<em class="property">class </em><code class="sig-prename descclassname">errors.</code><code class="sig-name descname">WorkflowError</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">Exception</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/errors.html#WorkflowError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#errors.WorkflowError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Raised when an incorrect Workflow is submitted to soma-workflow.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="errors.TransferError">
+<em class="property">class </em><code class="sig-prename descclassname">errors.</code><code class="sig-name descname">TransferError</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">Exception</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/errors.html#TransferError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#errors.TransferError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Raised when an incorrect Transfer is submitted to soma_workflow, or when an error occurs during a file transfer.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="errors.UnknownObjectError">
+<em class="property">class </em><code class="sig-prename descclassname">errors.</code><code class="sig-name descname">UnknownObjectError</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">Exception</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/errors.html#UnknownObjectError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#errors.UnknownObjectError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Raised when an operation is attempted on Jobs, Workflows or Transfers which
+do not exist or do not belong to the user.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="errors.EngineError">
+<em class="property">class </em><code class="sig-prename descclassname">errors.</code><code class="sig-name descname">EngineError</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">Exception</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/errors.html#EngineError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#errors.EngineError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Raised if an error occurs while starting the workflow engine.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="errors.DatabaseError">
+<em class="property">class </em><code class="sig-prename descclassname">errors.</code><code class="sig-name descname">DatabaseError</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">Exception</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/errors.html#DatabaseError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#errors.DatabaseError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Raised if an error occurs while reading or writing to the database.</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/logo_white_small.png" alt="Logo"/>
+            </a></p>
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Tips, Good Practices and Errors</a><ul>
+<li><a class="reference internal" href="#tips">Tips</a></li>
+<li><a class="reference internal" href="#good-practices-on-a-cluster">Good Practices on a cluster</a></li>
+<li><a class="reference internal" href="#good-practices-in-general">Good Practices in general</a></li>
+<li><a class="reference internal" href="#errors">Errors</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="MPI_workflow_runner.html"
+                        title="previous chapter">MPI workflow runner —<strong>beta</strong>—</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="status_list.html"
+                        title="next chapter">Status list</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/errors_troubleshooting.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="status_list.html" title="Status list"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="MPI_workflow_runner.html" title="MPI workflow runner —beta—"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">soma-workflow version 3.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Tips, Good Practices and Errors</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2011-2021 CEA, Neurospin, France, CATI, France.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

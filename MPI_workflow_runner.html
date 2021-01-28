@@ -1,0 +1,262 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MPI workflow runner —beta— &#8212; soma-workflow version 3.1 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    
+    <link rel="shortcut icon" href="_static/icon_small.ico"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Tips, Good Practices and Errors" href="errors_troubleshooting.html" />
+    <link rel="prev" title="Examples" href="examples.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="errors_troubleshooting.html" title="Tips, Good Practices and Errors"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="examples.html" title="Examples"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">soma-workflow version 3.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">MPI workflow runner —<strong>beta</strong>—</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="mpi-workflow-runner-beta">
+<span id="mpi-workflow-runner"></span><h1>MPI workflow runner —<strong>beta</strong>—<a class="headerlink" href="#mpi-workflow-runner-beta" title="Permalink to this headline">¶</a></h1>
+<dl class="simple">
+<dt>The MPI workflow runner is a second way of executing workflows using a cluster:</dt><dd><ul class="simple">
+<li><p>high throughput mode (using DRMAA for example): 1 job = 1 cluster job</p></li>
+<li><p>low throughput mode with the MPI workflow runner: 1 workflow = 1 cluster job</p></li>
+</ul>
+</dd>
+</dl>
+<a class="reference internal image-reference" href="_images/sw_high_throughput.png"><img alt="_images/sw_high_throughput.png" src="_images/sw_high_throughput.png" style="width: 438.59999999999997px; height: 309.0px;" /></a>
+<a class="reference internal image-reference" href="_images/sw_low_throughput.png"><img alt="_images/sw_low_throughput.png" src="_images/sw_low_throughput.png" style="width: 462.59999999999997px; height: 304.2px;" /></a>
+<dl class="simple">
+<dt>This mode makes it possible:</dt><dd><ul class="simple">
+<li><p>to run workflows on clusters with limited number of job per user.</p></li>
+<li><p>to run workflows on clusters where it is not possible to run a server process.</p></li>
+<li><p>to run workflows if you only have a simple MPI installation.</p></li>
+<li><p>to remove the time interval between jobs execution which is due to the submission of each job to the cluster management system.</p></li>
+</ul>
+</dd>
+</dl>
+<p>This mode is for advenced users who know how to use a cluster. In this mode the workflow control (submission, stop and resart) via the python API is disabled. The DRMS commands such as <em>qsub</em> and <em>qdel</em> for PBS for example, must be used instead. However, the monitoring tools (GUI and Python API) remains the same.</p>
+<div class="section" id="requirements">
+<h2>Requirements:<a class="headerlink" href="#requirements" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Python <em>version 2.7 or more</em></p></li>
+<li><p><a class="reference external" href="https://code.google.com/p/mpi4py">MPI4py</a></p></li>
+</ul>
+</div>
+<div class="section" id="installation">
+<h2>Installation:<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<p>This mode use pure Python code, you do not need to compile anything: c.f. <a class="reference external" href="http://brainvisa.info/soma-workflow">Soma-workflow main page</a> for installation.</p>
+</div>
+<div class="section" id="configuration">
+<h2>Configuration:<a class="headerlink" href="#configuration" title="Permalink to this headline">¶</a></h2>
+<p>Required items:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>DATABASE_FILE</p></li>
+<li><p>TRANSFERED_FILES_DIR</p></li>
+<li><p>SCHEDULER_TYPE</p></li>
+</ul>
+</div></blockquote>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><strong>SCHEDULER_TYPE must be set to “mpi”</strong></p>
+</div>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">Titan_MPI</span><span class="p">]</span>
+
+<span class="n">DATABASE_FILE</span>        <span class="o">=</span> <span class="n">path_mpi_runner_config</span><span class="o">/</span><span class="n">soma_workflow</span><span class="o">.</span><span class="n">db</span>
+<span class="n">TRANSFERED_FILES_DIR</span> <span class="o">=</span> <span class="n">path_mpi_runner_config</span><span class="o">/</span><span class="n">transfered_files</span>
+<span class="n">SCHEDULER_TYPE</span>       <span class="o">=</span> <span class="n">mpi</span>
+
+<span class="c1"># optional logging</span>
+<span class="n">SERVER_LOG_FILE</span>   <span class="o">=</span> <span class="n">path</span><span class="o">/</span><span class="n">logs</span><span class="o">/</span><span class="n">log_server</span>
+<span class="n">SERVER_LOG_FORMAT</span> <span class="o">=</span> <span class="o">%</span><span class="p">(</span><span class="n">asctime</span><span class="p">)</span><span class="n">s</span> <span class="o">=&gt;</span> <span class="n">line</span> <span class="o">%</span><span class="p">(</span><span class="n">lineno</span><span class="p">)</span><span class="n">s</span><span class="p">:</span> <span class="o">%</span><span class="p">(</span><span class="n">message</span><span class="p">)</span><span class="n">s</span>
+<span class="n">SERVER_LOG_LEVEL</span>  <span class="o">=</span> <span class="n">ERROR</span>
+<span class="n">ENGINE_LOG_DIR</span>    <span class="o">=</span> <span class="n">path</span><span class="o">/</span><span class="n">logs</span><span class="o">/</span>
+<span class="n">ENGINE_LOG_FORMAT</span> <span class="o">=</span> <span class="o">%</span><span class="p">(</span><span class="n">asctime</span><span class="p">)</span><span class="n">s</span> <span class="o">=&gt;</span> <span class="n">line</span> <span class="o">%</span><span class="p">(</span><span class="n">lineno</span><span class="p">)</span><span class="n">s</span><span class="p">:</span> <span class="o">%</span><span class="p">(</span><span class="n">message</span><span class="p">)</span><span class="n">s</span>
+<span class="n">ENGINE_LOG_LEVEL</span>  <span class="o">=</span> <span class="n">ERROR</span>
+</pre></div>
+</div>
+<p>Optionally, to monitor the workflow execution from a remote machine, the following lines can be used to configure soma-workflow on that machine:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">Titan_MPI</span><span class="p">]</span>
+<span class="c1"># remote access information</span>
+<span class="n">CLUSTER_ADDRESS</span>     <span class="o">=</span> <span class="n">titan</span><span class="o">.</span><span class="n">mylab</span><span class="o">.</span><span class="n">fr</span>
+<span class="n">SUBMITTING_MACHINES</span> <span class="o">=</span> <span class="n">titan0</span>
+
+<span class="c1"># optional</span>
+<span class="n">LOGIN</span> <span class="o">=</span> <span class="n">my_login_on_titan</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="mpi-workflow-runner-options">
+<h2>MPI_workflow_runner options:<a class="headerlink" href="#mpi-workflow-runner-options" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ python -m soma_workflow.MPI_workflow_runner --help
+Usage: MPI_workflow_runner.py [options]
+
+Options:
+  -h, --help            show this help message and exit
+  --workflow=WORKFLOW_FILE
+                        The workflow to run.
+  -r WF_ID_TO_RESTART, --restart=WF_ID_TO_RESTART
+                        The workflow id to restart
+  --nb_attempt_per_job=NB_ATTEMPT_PER_JOB
+                        A job can be restarted several time if it fails. This
+                        option specify the number of attempt per job. By
+                        default, the jobs are not restarted.
+</pre></div>
+</div>
+</div>
+<div class="section" id="example-using-pbs">
+<h2>Example using PBS:<a class="headerlink" href="#example-using-pbs" title="Permalink to this headline">¶</a></h2>
+<p>Create a submission script for PBS (example <em>run_workflow.sh</em>):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>#!/bin/bash
+#PBS -N my_workflow
+#PBS -j oe
+#PBS -l walltime=10:00:00
+#PBS -l nodes=3:ppn=8
+#PBS -q long
+
+time mpirun python -m soma_workflow.MPI_workflow_runner Titan_MPI --workflow $HOME/my_workflow_file
+</pre></div>
+</div>
+<p>In the example, the workflow will run on 8 cores of 3 nodes (that is 8*3 cpus). It will be submitted to the “long” queue, and will last at most 10 hours.</p>
+<p>Use the following command to submit the script to the cluster, and thus start the workflow execution:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ qsub run_workflow.sh
+</pre></div>
+</div>
+<p>You will get an cluster id for the MPI job you have submitted (112108 for example).
+Use the following command line to kill the MPI job and thus stop workflow execution:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ qdel 112108
+</pre></div>
+</div>
+<p>Each workflow has an id in Soma-workflow. This id is displayed in the GUI or can be recovered using the Python API (example 520).
+Use the following submission script to restart the workflow:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/bin/bash</span>
+<span class="c1">#PBS -N my_workflow</span>
+<span class="c1">#PBS -j oe</span>
+<span class="c1">#PBS -l walltime=10:00:00</span>
+<span class="c1">#PBS -l nodes=3:ppn=8</span>
+<span class="c1">#PBS -q long</span>
+
+<span class="n">time</span> <span class="n">mpirun</span> <span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">soma_workflow</span><span class="o">.</span><span class="n">MPI_workflow_runner</span> <span class="n">Titan_MPI</span> <span class="o">--</span><span class="n">restart</span> <span class="mi">520</span>
+</pre></div>
+</div>
+<p>As before, use “qsub” to submit the workflow and possibly “qdel” to stop it.</p>
+</div>
+<div class="section" id="current-limitations">
+<h2>Current limitations:<a class="headerlink" href="#current-limitations" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>The workflow must contain jobs using only one CPU</p></li>
+<li><p>It is safer to run only one MPI workflow runner at the same time</p></li>
+<li><p>As in the following example, some workflows might result of a waste of CPU time.</p></li>
+</ul>
+<a class="reference internal image-reference" href="_images/sw_low_throughput_wasted_cpus.png"><img alt="_images/sw_low_throughput_wasted_cpus.png" src="_images/sw_low_throughput_wasted_cpus.png" style="width: 814.8px; height: 304.2px;" /></a>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/logo_white_small.png" alt="Logo"/>
+            </a></p>
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">MPI workflow runner —<strong>beta</strong>—</a><ul>
+<li><a class="reference internal" href="#requirements">Requirements:</a></li>
+<li><a class="reference internal" href="#installation">Installation:</a></li>
+<li><a class="reference internal" href="#configuration">Configuration:</a></li>
+<li><a class="reference internal" href="#mpi-workflow-runner-options">MPI_workflow_runner options:</a></li>
+<li><a class="reference internal" href="#example-using-pbs">Example using PBS:</a></li>
+<li><a class="reference internal" href="#current-limitations">Current limitations:</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="examples.html"
+                        title="previous chapter">Examples</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="errors_troubleshooting.html"
+                        title="next chapter">Tips, Good Practices and Errors</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/MPI_workflow_runner.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="errors_troubleshooting.html" title="Tips, Good Practices and Errors"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="examples.html" title="Examples"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">soma-workflow version 3.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">MPI workflow runner —<strong>beta</strong>—</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2011-2021 CEA, Neurospin, France, CATI, France.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

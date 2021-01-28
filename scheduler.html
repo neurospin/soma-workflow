@@ -1,0 +1,572 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Supporting new computing resources: writing a Scheduler implementation &#8212; soma-workflow version 3.1 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    
+    <link rel="shortcut icon" href="_static/icon_small.ico"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Installation and configuration" href="install_config.html" />
+    <link rel="prev" title="Python API" href="client_API.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="install_config.html" title="Installation and configuration"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="client_API.html" title="Python API"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">soma-workflow version 3.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Supporting new computing resources: writing a Scheduler implementation</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="supporting-new-computing-resources-writing-a-scheduler-implementation">
+<h1>Supporting new computing resources: writing a Scheduler implementation<a class="headerlink" href="#supporting-new-computing-resources-writing-a-scheduler-implementation" title="Permalink to this headline">¶</a></h1>
+<p>In Soma-Workflow the link between the workflow and jobs API and the computing resource jobs manager is handled through <a class="reference internal" href="#scheduler.Scheduler" title="scheduler.Scheduler"><code class="xref py py-class docutils literal notranslate"><span class="pre">Scheduler</span></code></a> subclasses implementations. There are already several in Soma-Workflow: a local scheduler to run on a standard computer (<a class="reference internal" href="#soma_workflow.schedulers.local_scheduler.LocalScheduler" title="soma_workflow.schedulers.local_scheduler.LocalScheduler"><code class="xref py py-class docutils literal notranslate"><span class="pre">LocalScheduler</span></code></a>), a DRMAA implementation which can use several types of DRMS (cluster managers) (<code class="xref py py-class docutils literal notranslate"><span class="pre">DrmaaScheduler</span></code>), the MPI scheduler (<code class="xref py py-class docutils literal notranslate"><span class="pre">MPIScheduler</span></code>), and now also a PBS Pro scheduler (since DRMAA does not work any longer with it) (<a class="reference internal" href="#soma_workflow.schedulers.pbspro_scheduler.PBSProScheduler" title="soma_workflow.schedulers.pbspro_scheduler.PBSProScheduler"><code class="xref py py-class docutils literal notranslate"><span class="pre">PBSProScheduler</span></code></a>).</p>
+<p>In case the computing resource you are using is not supported by the existing implementations, it is possible and relatively easy to write a new <code class="xref py py-class docutils literal notranslate"><span class="pre">Scheduler</span></code> implementation to handle a new type of cluster typically. It is a matter of writing a <code class="xref py py-class docutils literal notranslate"><span class="pre">Scheduler</span></code> subclass which implements the different methods, mainly 4 methods have to be defined (job_submission, get_job_status, get_job_exit_info, kill_job), plus the build_scheduler class method which just instantiates an instance of the derived class with appropriate parameters.</p>
+<p>A good and easy example to look at is the <a class="reference internal" href="#soma_workflow.schedulers.pbspro_scheduler.PBSProScheduler" title="soma_workflow.schedulers.pbspro_scheduler.PBSProScheduler"><code class="xref py py-class docutils literal notranslate"><span class="pre">PBSProScheduler</span></code></a> implementation which merely runs DRMS commands (<code class="docutils literal notranslate"><span class="pre">qsub</span></code>, <code class="docutils literal notranslate"><span class="pre">qstat</span></code>) and does not use complex C/python bindings. This implementation has been written in a few hours, so it is not a huge work.</p>
+<div class="section" id="scheduler-definition">
+<h2>Scheduler definition<a class="headerlink" href="#scheduler-definition" title="Permalink to this headline">¶</a></h2>
+<p>This is the generic, abstract API.</p>
+<span class="target" id="module-scheduler"></span><dl class="py class">
+<dt id="scheduler.Scheduler">
+<em class="property">class </em><code class="sig-prename descclassname">scheduler.</code><code class="sig-name descname">Scheduler</code><a class="reference internal" href="_modules/scheduler.html#Scheduler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scheduler.Scheduler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Allow to submit, kill and get the status of jobs.</p>
+<p>The Scheduler class is an abstract class which specifies the jobs
+management API. It has several implementations, located in
+<code class="docutils literal notranslate"><span class="pre">soma_workflow.schedulers.*_scheduler</span></code>.</p>
+<p>A scheduler implementation class can be retrived using the global function
+<a class="reference internal" href="#scheduler.get_scheduler_implementation" title="scheduler.get_scheduler_implementation"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_scheduler_implementation()</span></code></a>, or instantiated using
+<a class="reference internal" href="#scheduler.build_scheduler" title="scheduler.build_scheduler"><code class="xref py py-func docutils literal notranslate"><span class="pre">build_scheduler()</span></code></a>.</p>
+<p>New schedulers can be written to support computing resources types that are
+currently not supported (a cluster with a DRMS which has no DRMAA
+implementation typicalyly). The various methods of the Scheduler API have
+to be overloaded in this case.</p>
+<dl class="py method">
+<dt id="scheduler.Scheduler.build_scheduler">
+<em class="property">classmethod </em><code class="sig-name descname">build_scheduler</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">config</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scheduler.html#Scheduler.build_scheduler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scheduler.Scheduler.build_scheduler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a scheduler of the expected type, using configuration to
+parameterize it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>config</strong> (<em>Configuration</em>) – configuration object instance</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="scheduler.Scheduler.get_job_exit_info">
+<code class="sig-name descname">get_job_exit_info</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">scheduler_job_id</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scheduler.html#Scheduler.get_job_exit_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scheduler.Scheduler.get_job_exit_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>The exit info consists of 4 values returned in a tuple:
+<strong>exit_status</strong>: string</p>
+<blockquote>
+<div><p>one of the constants.JOB_EXIT_STATUS values</p>
+</div></blockquote>
+<dl class="simple">
+<dt><strong>exit_value</strong>: int</dt><dd><p>exit code of the command (normally 0 in case of success)</p>
+</dd>
+<dt><strong>term_sig</strong>: int</dt><dd><p>termination signal, 0 IF ok</p>
+</dd>
+<dt><strong>resource_usage</strong>: bytes</dt><dd><p>bytes string in the shape
+<code class="docutils literal notranslate"><span class="pre">b'cpupercent=60</span> <span class="pre">mem=13530kb</span> <span class="pre">cput=00:00:12'</span></code> etc. Items may include:</p>
+<ul class="simple">
+<li><p>cpupercent</p></li>
+<li><p>cput</p></li>
+<li><p>mem</p></li>
+<li><p>vmem</p></li>
+<li><p>ncpus</p></li>
+<li><p>walltime</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>scheduler_job_id</strong> (<em>string</em>) – Job id for the scheduling system (DRMAA for example)</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>exit_info</strong> – exit_status, exit_value, term_sig, resource_usage</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.9)">tuple</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="scheduler.Scheduler.get_job_status">
+<code class="sig-name descname">get_job_status</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">scheduler_job_id</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scheduler.html#Scheduler.get_job_status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scheduler.Scheduler.get_job_status" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>scheduler_job_id</strong> (<em>string</em>) – Job id for the scheduling system (DRMAA for example)</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>status</strong> – Job status as defined in constants.JOB_STATUS</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="scheduler.Scheduler.job_submission">
+<code class="sig-name descname">job_submission</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">job</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scheduler.html#Scheduler.job_submission"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scheduler.Scheduler.job_submission" title="Permalink to this definition">¶</a></dt>
+<dd><p>Submit a Soma-Workflow job</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>job</strong> (<em>EngineJob</em>) – Job to be submitted</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>job_id</strong> – Job id for the scheduling system (DRMAA for example, or native DRMS
+identifier)</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="scheduler.Scheduler.kill_job">
+<code class="sig-name descname">kill_job</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">scheduler_job_id</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scheduler.html#Scheduler.kill_job"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scheduler.Scheduler.kill_job" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>scheduler_job_id</strong> (<em>string</em>) – Job id for the scheduling system (DRMAA for example)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="scheduler.build_scheduler">
+<code class="sig-prename descclassname">scheduler.</code><code class="sig-name descname">build_scheduler</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">scheduler_type</span></em>, <em class="sig-param"><span class="n">config</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scheduler.html#build_scheduler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scheduler.build_scheduler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a scheduler of the expected type, using configuration to
+parameterize it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>scheduler_type</strong> (<em>string</em>) – type of scheduler to be built</p></li>
+<li><p><strong>config</strong> (<em>Configuration</em>) – configuration object</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>scheduler</strong> – Scheduler instance</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#scheduler.Scheduler" title="scheduler.Scheduler">Scheduler</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="scheduler.get_scheduler_implementation">
+<code class="sig-prename descclassname">scheduler.</code><code class="sig-name descname">get_scheduler_implementation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">scheduler_type</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scheduler.html#get_scheduler_implementation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scheduler.get_scheduler_implementation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the scheduler class implementation corresponding to the expected
+one.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>scheduler_type</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – scheduler type: ‘drmaa’, ‘drmaa2’, ‘local_basic’, ‘mpi’, or other
+custom scheduler</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>scheduler_class</strong></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Scheduler subclass</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="scheduler.get_schedulers_list">
+<code class="sig-prename descclassname">scheduler.</code><code class="sig-name descname">get_schedulers_list</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/scheduler.html#get_schedulers_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#scheduler.get_schedulers_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>List all available installed schedulers</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>schedulers</strong> – schedulers list. Each item is a tuple (name, enabled)</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.9)">list</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="pbs-pro-implementation">
+<span id="pbspro"></span><h2>PBS Pro implementation<a class="headerlink" href="#pbs-pro-implementation" title="Permalink to this headline">¶</a></h2>
+<p>The PBS Pro scheduler is not using the DRMAA library, we had to design it because the DRMAA implementation was not working any longer on our cluster. This implementation is a very simple (and probably sub-optimal) wrapping around PBS commandlines (<code class="docutils literal notranslate"><span class="pre">qsub</span></code>, <code class="docutils literal notranslate"><span class="pre">qstat</span></code>, <code class="docutils literal notranslate"><span class="pre">qdel</span></code>). It should also reasonably work using Torque/PBS 2.5 but has not been extensively tested this way (since DRMAA works for it).</p>
+<p>To use the PBS Pro scheduler, specify in the server config file:</p>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">scheduler_type</span> <span class="o">=</span> <span class="s">pbspro</span>
+</pre></div>
+</div>
+<span class="target" id="module-soma_workflow.schedulers.pbspro_scheduler"></span><dl class="py class">
+<dt id="soma_workflow.schedulers.pbspro_scheduler.PBSProScheduler">
+<em class="property">class </em><code class="sig-prename descclassname">soma_workflow.schedulers.pbspro_scheduler.</code><code class="sig-name descname">PBSProScheduler</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">parallel_job_submission_info</span></em>, <em class="sig-param"><span class="n">tmp_file_path</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">configured_native_spec</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/soma_workflow/schedulers/pbspro_scheduler.html#PBSProScheduler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#soma_workflow.schedulers.pbspro_scheduler.PBSProScheduler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Scheduling using a PBS Pro session.</p>
+<dl class="py method">
+<dt id="soma_workflow.schedulers.pbspro_scheduler.PBSProScheduler.build_scheduler">
+<em class="property">classmethod </em><code class="sig-name descname">build_scheduler</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">config</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/soma_workflow/schedulers/pbspro_scheduler.html#PBSProScheduler.build_scheduler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#soma_workflow.schedulers.pbspro_scheduler.PBSProScheduler.build_scheduler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build an instance of PBSProScheduler</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="soma_workflow.schedulers.pbspro_scheduler.PBSProScheduler.get_job_exit_info">
+<code class="sig-name descname">get_job_exit_info</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">scheduler_job_id</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/soma_workflow/schedulers/pbspro_scheduler.html#PBSProScheduler.get_job_exit_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#soma_workflow.schedulers.pbspro_scheduler.PBSProScheduler.get_job_exit_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>The exit info consists of 4 values returned in a tuple:
+<strong>exit_status</strong>: string</p>
+<blockquote>
+<div><p>one of the constants.JOB_EXIT_STATUS values</p>
+</div></blockquote>
+<dl class="simple">
+<dt><strong>exit_value</strong>: int</dt><dd><p>exit code of the command (normally 0 in case of success)</p>
+</dd>
+<dt><strong>term_sig</strong>: int</dt><dd><p>termination signal, 0 IF ok</p>
+</dd>
+<dt><strong>resource_usage</strong>: unicode</dt><dd><p>string in the shape
+<code class="docutils literal notranslate"><span class="pre">'cpupercent=60</span> <span class="pre">mem=13530kb</span> <span class="pre">cput=00:00:12'</span></code> etc. Items may include:</p>
+<ul class="simple">
+<li><p>cpupercent</p></li>
+<li><p>cput</p></li>
+<li><p>mem</p></li>
+<li><p>vmem</p></li>
+<li><p>ncpus</p></li>
+<li><p>walltime</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>scheduler_job_id</strong> (<em>string</em>) – Job id for the scheduling system (DRMAA for example)</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>exit_info</strong> – exit_status, exit_value, term_sig, resource_usage</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.9)">tuple</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="soma_workflow.schedulers.pbspro_scheduler.PBSProScheduler.get_job_extended_status">
+<code class="sig-name descname">get_job_extended_status</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">scheduler_job_id</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/soma_workflow/schedulers/pbspro_scheduler.html#PBSProScheduler.get_job_extended_status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#soma_workflow.schedulers.pbspro_scheduler.PBSProScheduler.get_job_extended_status" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get job full status in a dictionary (from qstat in json format)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="soma_workflow.schedulers.pbspro_scheduler.PBSProScheduler.get_job_status">
+<code class="sig-name descname">get_job_status</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">scheduler_job_id</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/soma_workflow/schedulers/pbspro_scheduler.html#PBSProScheduler.get_job_status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#soma_workflow.schedulers.pbspro_scheduler.PBSProScheduler.get_job_status" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>scheduler_job_id</strong> (<em>string</em>) – Job id for the scheduling system (DRMAA for example)</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>status</strong> – Job status as defined in constants.JOB_STATUS</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="soma_workflow.schedulers.pbspro_scheduler.PBSProScheduler.get_pbs_version">
+<code class="sig-name descname">get_pbs_version</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/soma_workflow/schedulers/pbspro_scheduler.html#PBSProScheduler.get_pbs_version"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#soma_workflow.schedulers.pbspro_scheduler.PBSProScheduler.get_pbs_version" title="Permalink to this definition">¶</a></dt>
+<dd><p>get PBS implementation and version. May be PBS Pro or Torque/PBS</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>pbs_version</strong> – (implementation, version)</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.9)">tuple</a> (2 strings)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="soma_workflow.schedulers.pbspro_scheduler.PBSProScheduler.job_submission">
+<code class="sig-name descname">job_submission</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">job</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/soma_workflow/schedulers/pbspro_scheduler.html#PBSProScheduler.job_submission"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#soma_workflow.schedulers.pbspro_scheduler.PBSProScheduler.job_submission" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>job</strong> (<em>soma_workflow.client.Job</em>) – job to be submitted</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>job_id</strong> – job id</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="soma_workflow.schedulers.pbspro_scheduler.PBSProScheduler.kill_job">
+<code class="sig-name descname">kill_job</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">scheduler_job_id</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/soma_workflow/schedulers/pbspro_scheduler.html#PBSProScheduler.kill_job"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#soma_workflow.schedulers.pbspro_scheduler.PBSProScheduler.kill_job" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>scheduler_job_id</strong> (<em>string</em>) – Job id for the scheduling system (DRMAA for example)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="soma_workflow.schedulers.pbspro_scheduler.PBSProScheduler.setup_pbs_variant">
+<code class="sig-name descname">setup_pbs_variant</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/soma_workflow/schedulers/pbspro_scheduler.html#PBSProScheduler.setup_pbs_variant"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#soma_workflow.schedulers.pbspro_scheduler.PBSProScheduler.setup_pbs_variant" title="Permalink to this definition">¶</a></dt>
+<dd><p>determine PBS implementation / version and set internal behaviour accordingly</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="soma_workflow.schedulers.pbspro_scheduler.PBSProScheduler.submit_simple_test_job">
+<code class="sig-name descname">submit_simple_test_job</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">outstr</span></em>, <em class="sig-param"><span class="n">out_o_file</span></em>, <em class="sig-param"><span class="n">out_e_file</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/soma_workflow/schedulers/pbspro_scheduler.html#PBSProScheduler.submit_simple_test_job"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#soma_workflow.schedulers.pbspro_scheduler.PBSProScheduler.submit_simple_test_job" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a job to test</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="soma_workflow.schedulers.pbspro_scheduler.PBSProScheduler.wait_job">
+<code class="sig-name descname">wait_job</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">job_id</span></em>, <em class="sig-param"><span class="n">timeout</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">poll_interval</span><span class="o">=</span><span class="default_value">0.3</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/soma_workflow/schedulers/pbspro_scheduler.html#PBSProScheduler.wait_job"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#soma_workflow.schedulers.pbspro_scheduler.PBSProScheduler.wait_job" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wait for a specific job to be terminated.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="local-implementation">
+<h2>Local implementation<a class="headerlink" href="#local-implementation" title="Permalink to this headline">¶</a></h2>
+<p>To use the local scheduler, specify in the server config file:</p>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">scheduler_type</span> <span class="o">=</span> <span class="s">local_basic</span>
+</pre></div>
+</div>
+<span class="target" id="module-soma_workflow.schedulers.local_scheduler"></span><dl class="py class">
+<dt id="soma_workflow.schedulers.local_scheduler.ConfiguredLocalScheduler">
+<em class="property">class </em><code class="sig-prename descclassname">soma_workflow.schedulers.local_scheduler.</code><code class="sig-name descname">ConfiguredLocalScheduler</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">config</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/soma_workflow/schedulers/local_scheduler.html#ConfiguredLocalScheduler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#soma_workflow.schedulers.local_scheduler.ConfiguredLocalScheduler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Local scheduler synchronized with a configuration object.</p>
+<ul class="simple">
+<li><p>config <em>LocalSchedulerCfg</em></p></li>
+</ul>
+<dl class="py method">
+<dt id="soma_workflow.schedulers.local_scheduler.ConfiguredLocalScheduler.build_scheduler">
+<em class="property">classmethod </em><code class="sig-name descname">build_scheduler</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">config</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/soma_workflow/schedulers/local_scheduler.html#ConfiguredLocalScheduler.build_scheduler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#soma_workflow.schedulers.local_scheduler.ConfiguredLocalScheduler.build_scheduler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a scheduler of the expected type, using configuration to
+parameterize it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>config</strong> (<em>Configuration</em>) – configuration object instance</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="soma_workflow.schedulers.local_scheduler.LocalScheduler">
+<em class="property">class </em><code class="sig-prename descclassname">soma_workflow.schedulers.local_scheduler.</code><code class="sig-name descname">LocalScheduler</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">proc_nb</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">interval</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">max_proc_nb</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/soma_workflow/schedulers/local_scheduler.html#LocalScheduler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#soma_workflow.schedulers.local_scheduler.LocalScheduler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Allow to submit, kill and get the status of jobs.
+Run on one machine without dependencies.</p>
+<ul class="simple">
+<li><p>_proc_nb <em>int</em></p></li>
+<li><p>_queue <em>list of scheduler jobs ids</em></p></li>
+<li><p>_jobs <em>dictionary job_id -&gt; soma_workflow.engine_types.EngineJob</em></p></li>
+<li><p>_processes <em>dictionary job_id -&gt; subprocess.Popen</em></p></li>
+<li><p>_status <em>dictionary job_id -&gt; job status as defined in constants</em></p></li>
+<li><p>_exit_info * dictionay job_id -&gt; exit info*</p></li>
+<li><p>_loop <em>thread</em></p></li>
+<li><p>_interval <em>int</em></p></li>
+<li><p>_lock <em>threading.RLock</em></p></li>
+</ul>
+<dl class="py method">
+<dt id="soma_workflow.schedulers.local_scheduler.LocalScheduler.create_process">
+<em class="property">static </em><code class="sig-name descname">create_process</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">engine_job</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/soma_workflow/schedulers/local_scheduler.html#LocalScheduler.create_process"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#soma_workflow.schedulers.local_scheduler.LocalScheduler.create_process" title="Permalink to this definition">¶</a></dt>
+<dd><ul class="simple">
+<li><p>engine_job <em>EngineJob</em></p></li>
+<li><p>returns: <em>Subprocess process</em></p></li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
+<dt id="soma_workflow.schedulers.local_scheduler.LocalScheduler.get_job_exit_info">
+<code class="sig-name descname">get_job_exit_info</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">scheduler_job_id</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/soma_workflow/schedulers/local_scheduler.html#LocalScheduler.get_job_exit_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#soma_workflow.schedulers.local_scheduler.LocalScheduler.get_job_exit_info" title="Permalink to this definition">¶</a></dt>
+<dd><ul class="simple">
+<li><dl class="simple">
+<dt>scheduler_job_id <em>string</em></dt><dd><p>Job id for the scheduling system (DRMAA for example)</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>return: <em>tuple</em></dt><dd><p>exit_status, exit_value, term_sig, resource_usage</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
+<dt id="soma_workflow.schedulers.local_scheduler.LocalScheduler.get_job_status">
+<code class="sig-name descname">get_job_status</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">scheduler_job_id</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/soma_workflow/schedulers/local_scheduler.html#LocalScheduler.get_job_status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#soma_workflow.schedulers.local_scheduler.LocalScheduler.get_job_status" title="Permalink to this definition">¶</a></dt>
+<dd><ul class="simple">
+<li><dl class="simple">
+<dt>scheduler_job_id <em>string</em></dt><dd><p>Job id for the scheduling system (DRMAA for example)</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>return: <em>string</em></dt><dd><p>Job status as defined in constants.JOB_STATUS</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
+<dt id="soma_workflow.schedulers.local_scheduler.LocalScheduler.job_submission">
+<code class="sig-name descname">job_submission</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">job</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/soma_workflow/schedulers/local_scheduler.html#LocalScheduler.job_submission"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#soma_workflow.schedulers.local_scheduler.LocalScheduler.job_submission" title="Permalink to this definition">¶</a></dt>
+<dd><ul class="simple">
+<li><p>job <em>EngineJob</em></p></li>
+<li><dl class="simple">
+<dt>return: <em>string</em></dt><dd><p>Job id for the scheduling system (DRMAA for example)</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
+<dt id="soma_workflow.schedulers.local_scheduler.LocalScheduler.kill_job">
+<code class="sig-name descname">kill_job</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">scheduler_job_id</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/soma_workflow/schedulers/local_scheduler.html#LocalScheduler.kill_job"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#soma_workflow.schedulers.local_scheduler.LocalScheduler.kill_job" title="Permalink to this definition">¶</a></dt>
+<dd><ul class="simple">
+<li><dl class="simple">
+<dt>scheduler_job_id <em>string</em></dt><dd><p>Job id for the scheduling system (DRMAA for example)</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py exception">
+<dt id="soma_workflow.schedulers.local_scheduler.LocalSchedulerError">
+<em class="property">exception </em><code class="sig-prename descclassname">soma_workflow.schedulers.local_scheduler.</code><code class="sig-name descname">LocalSchedulerError</code><a class="reference internal" href="_modules/soma_workflow/schedulers/local_scheduler.html#LocalSchedulerError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#soma_workflow.schedulers.local_scheduler.LocalSchedulerError" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="soma_workflow.schedulers.local_scheduler.kill_process_tree">
+<code class="sig-prename descclassname">soma_workflow.schedulers.local_scheduler.</code><code class="sig-name descname">kill_process_tree</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pid</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/soma_workflow/schedulers/local_scheduler.html#kill_process_tree"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#soma_workflow.schedulers.local_scheduler.kill_process_tree" title="Permalink to this definition">¶</a></dt>
+<dd><p>Kill a process with its children.
+Needs psutil to get children list</p>
+</dd></dl>
+
+</div>
+<div class="section" id="drmaa-implementation">
+<h2>DRMAA implementation<a class="headerlink" href="#drmaa-implementation" title="Permalink to this headline">¶</a></h2>
+<p>To use the DRMAA scheduler, specify in the server config file (this is the default on a server actually so it is not mandatory to specify it):</p>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">scheduler_type</span> <span class="o">=</span> <span class="s">drmaa</span>
+</pre></div>
+</div>
+<p>Note that the DRMAA implementation only supports the DRMAA1 API, not DRMAA2. A work has been started to build a DRMAA2 implementation, but has been stopped because we did not find a working DRMAA2 C implementation for our PBSPro cluster.</p>
+<span class="target" id="module-soma_workflow.schedulers.drmaa_scheduler"></span></div>
+<div class="section" id="mpi-implementation">
+<h2>MPI implementation<a class="headerlink" href="#mpi-implementation" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/logo_white_small.png" alt="Logo"/>
+            </a></p>
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Supporting new computing resources: writing a Scheduler implementation</a><ul>
+<li><a class="reference internal" href="#scheduler-definition">Scheduler definition</a></li>
+<li><a class="reference internal" href="#pbs-pro-implementation">PBS Pro implementation</a></li>
+<li><a class="reference internal" href="#local-implementation">Local implementation</a></li>
+<li><a class="reference internal" href="#drmaa-implementation">DRMAA implementation</a></li>
+<li><a class="reference internal" href="#mpi-implementation">MPI implementation</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="client_API.html"
+                        title="previous chapter">Python API</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="install_config.html"
+                        title="next chapter">Installation and configuration</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/scheduler.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="install_config.html" title="Installation and configuration"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="client_API.html" title="Python API"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">soma-workflow version 3.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Supporting new computing resources: writing a Scheduler implementation</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2011-2021 CEA, Neurospin, France, CATI, France.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

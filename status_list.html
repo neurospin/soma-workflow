@@ -1,0 +1,230 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Status list &#8212; soma-workflow version 3.1 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    
+    <link rel="shortcut icon" href="_static/icon_small.ico"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Workflow creation API" href="workflow_creation.html" />
+    <link rel="prev" title="Tips, Good Practices and Errors" href="errors_troubleshooting.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="workflow_creation.html" title="Workflow creation API"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="errors_troubleshooting.html" title="Tips, Good Practices and Errors"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">soma-workflow version 3.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Status list</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="status-list">
+<span id="id1"></span><h1>Status list<a class="headerlink" href="#status-list" title="Permalink to this headline">¶</a></h1>
+<p>Once submitted to Soma-workflow, the jobs, workflows and file transfers are
+associated to statuses which reflect their states in the system. Here is the
+list of possible statuses for each class of objects.</p>
+<div class="section" id="job-status">
+<span id="id2"></span><h2>Job status<a class="headerlink" href="#job-status" title="Permalink to this headline">¶</a></h2>
+<p>Here is the list of the job statuses and the associated icons displayed in the GUI.</p>
+<blockquote>
+<div><dl class="simple">
+<dt><a class="reference internal" href="_images/no_status.png"><img alt="no_status" src="_images/no_status.png" style="width: 30.0px; height: 30.0px;" /></a> <strong>not_submitted</strong></dt><dd><p>The job was not submitted yet to soma-workflow.</p>
+</dd>
+<dt><a class="reference internal" href="_images/undetermined.png"><img alt="undeter" src="_images/undetermined.png" style="width: 30.0px; height: 30.0px;" /></a> <strong>undetermined</strong></dt><dd><p>Transitive status. The job status is changing and will be updated soon.</p>
+</dd>
+<dt><a class="reference internal" href="_images/pending.png"><img alt="pending" src="_images/pending.png" style="width: 30.0px; height: 30.0px;" /></a> <strong>submission_pending</strong></dt><dd><p>Due to a limitation of the number of job in the queue (see <a class="reference internal" href="install_config.html#conf-server-option"><span class="std std-ref">Configuration items optional on the server side:</span></a>), the job is
+waiting to be submitted to the DRMS.</p>
+</dd>
+<dt><a class="reference internal" href="_images/queued.png"><img alt="queued" src="_images/queued.png" style="width: 30.0px; height: 30.0px;" /></a> <strong>queued_active</strong></dt><dd><p>The job was submitted to the DRMS and is currently waiting in the queue.</p>
+</dd>
+<dt><a class="reference internal" href="_images/running.png"><img alt="running" src="_images/running.png" style="width: 30.0px; height: 30.0px;" /></a> <strong>running</strong></dt><dd><p>The job is running on the computing resource.</p>
+</dd>
+<dt><a class="reference internal" href="_images/success.png"><img alt="success" src="_images/success.png" style="width: 30.0px; height: 30.0px;" /></a> or <a class="reference internal" href="_images/failed.png"><img alt="failed" src="_images/failed.png" style="width: 30.0px; height: 30.0px;" /></a> <strong>done</strong></dt><dd><p>The job finished normally. However it does not mean that it ended with
+success (see <a class="reference internal" href="#job-exit-status"><span class="std std-ref">Job exit status</span></a>).</p>
+</dd>
+<dt><a class="reference internal" href="_images/failed.png"><img alt="failed" src="_images/failed.png" style="width: 30.0px; height: 30.0px;" /></a> <strong>failed</strong></dt><dd><p>The job exited abnormally before finishing.</p>
+</dd>
+<dt><a class="reference internal" href="_images/warning.png"><img alt="warning" src="_images/warning.png" style="width: 30.0px; height: 30.0px;" /></a> <strong>warning</strong></dt><dd><p>The workflow engine process in charge of the monitoring of the job status
+was killed or failed. The job or the workflow containing the job has to be
+stopped and restarted.</p>
+</dd>
+<dt><strong>delete_pending</strong></dt><dd><p>Transitive status. The job will be deleted soon.</p>
+</dd>
+<dt><strong>kill_pending</strong></dt><dd><p>Transitive status. The job will be killed soon.</p>
+</dd>
+</dl>
+</div></blockquote>
+</div>
+<div class="section" id="job-exit-status">
+<span id="id3"></span><h2>Job exit status<a class="headerlink" href="#job-exit-status" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><dl class="simple">
+<dt><strong>finished_regularly</strong></dt><dd><p>The job finished regularly. The exit value is displayed in the GUI and is
+available from the Python API. If the value is different from 0
+Soma-workflow considers that the job failed.</p>
+</dd>
+<dt><strong>finished_signal</strong></dt><dd><p>The job finished due to a signal. The signal is displayed on the GUI and
+is available from the python API (depending on DRMAA implementation).</p>
+</dd>
+<dt><strong>killed_by_user</strong></dt><dd><p>The job was killed by the user.</p>
+</dd>
+<dt><strong>aborted</strong></dt><dd><p>The job never ran.</p>
+</dd>
+<dt><strong>exit_status_undetermined</strong></dt><dd><p>The exit status can not be determined.</p>
+</dd>
+</dl>
+</div></blockquote>
+</div>
+<div class="section" id="workflow-status">
+<span id="id4"></span><h2>Workflow status<a class="headerlink" href="#workflow-status" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><dl class="simple">
+<dt><a class="reference internal" href="_images/no_status.png"><img alt="no_status" src="_images/no_status.png" style="width: 30.0px; height: 30.0px;" /></a> <strong>worklflow_not_started</strong></dt><dd><p>The workflow was not submitted to Soma-workflow.</p>
+</dd>
+<dt><a class="reference internal" href="_images/running.png"><img alt="running" src="_images/running.png" style="width: 30.0px; height: 30.0px;" /></a> <strong>workflow_in_progress</strong></dt><dd><p>The workflow was submitted to Soma-workflow.</p>
+</dd>
+<dt><a class="reference internal" href="_images/done.png"><img alt="done" src="_images/done.png" style="width: 30.0px; height: 30.0px;" /></a> <strong>workflow_done</strong></dt><dd><p>The workflow is done.</p>
+</dd>
+<dt><strong>delete_pending</strong></dt><dd><p>Transitive status. The workflow will be deleted soon.</p>
+</dd>
+<dt><a class="reference internal" href="_images/warning.png"><img alt="warning" src="_images/warning.png" style="width: 30.0px; height: 30.0px;" /></a> <strong>warning</strong></dt><dd><p>The workflow engine process in charge of the workflow execution was killed
+or failed on the computing resource side. The workflow has to be stopped and
+restarted (the jobs which ended with success will not be restarted).</p>
+</dd>
+</dl>
+</div></blockquote>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference internal" href="_images/warning.png"><img alt="warning" src="_images/warning.png" style="width: 30.0px; height: 30.0px;" /></a> In case of warning status a simple solution is to stop and
+restart the workflow.
+The job which ended with success will not be restarted.</p>
+<p>However, the warning status does not mean that the jobs failed. In case of very
+long jobs, you can check yourself the status of the job(s) on the DRMS and
+choose to stop the jobs from the DRMS or not.</p>
+</div>
+</div>
+<div class="section" id="file-transfer-status">
+<span id="id5"></span><h2>File Transfer status<a class="headerlink" href="#file-transfer-status" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><dl class="simple">
+<dt><a class="reference internal" href="_images/transfer_files_dont_exist.png"><img alt="tr_dont_exist" src="_images/transfer_files_dont_exist.png" style="width: 30.0px; height: 30.0px;" /></a> <strong>do not exist</strong></dt><dd><p>The file(s) do not exist. For example: output files at the beginning of a
+workflow execution.</p>
+</dd>
+<dt><a class="reference internal" href="_images/transfer_files_on_client.png"><img alt="tr_on_c" src="_images/transfer_files_on_client.png" style="width: 30.0px; height: 30.0px;" /></a> <strong>on client side</strong></dt><dd><p>The file(s) exist on the client side only. For example: input files.</p>
+</dd>
+<dt><a class="reference internal" href="_images/transfer_files_on_cr.png"><img alt="tr_on_cr" src="_images/transfer_files_on_cr.png" style="width: 30.0px; height: 30.0px;" /></a> <strong>on computing resource side</strong></dt><dd><p>The file(s) exist on the computing resource side only. For example: output
+files after the end of a job.</p>
+</dd>
+<dt><a class="reference internal" href="_images/transfer_files_on_both.png"><img alt="tr_on_both" src="_images/transfer_files_on_both.png" style="width: 30.0px; height: 30.0px;" /></a> <strong>on both sides</strong></dt><dd><p>The file(s) exist both on the client and computing resource side. For example:
+A transfer ended.</p>
+</dd>
+<dt><a class="reference internal" href="_images/transfering_from_client_to_cr.png"><img alt="tr_c_to_cr" src="_images/transfering_from_client_to_cr.png" style="width: 30.0px; height: 30.0px;" /></a> <strong>transfering client-&gt;cr</strong></dt><dd><p>The file(s) are being transfered form the client to the computing resource.</p>
+</dd>
+<dt><a class="reference internal" href="_images/transfering_from_cr_to_client.png"><img alt="tr_cr_to_c" src="_images/transfering_from_cr_to_client.png" style="width: 30.0px; height: 30.0px;" /></a> <strong>transfering cr-&gt;client</strong></dt><dd><p>The file(s) are being transfered from the computing resource to the client.</p>
+</dd>
+</dl>
+</div></blockquote>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/logo_white_small.png" alt="Logo"/>
+            </a></p>
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Status list</a><ul>
+<li><a class="reference internal" href="#job-status">Job status</a></li>
+<li><a class="reference internal" href="#job-exit-status">Job exit status</a></li>
+<li><a class="reference internal" href="#workflow-status">Workflow status</a></li>
+<li><a class="reference internal" href="#file-transfer-status">File Transfer status</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="errors_troubleshooting.html"
+                        title="previous chapter">Tips, Good Practices and Errors</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="workflow_creation.html"
+                        title="next chapter">Workflow creation API</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/status_list.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="workflow_creation.html" title="Workflow creation API"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="errors_troubleshooting.html" title="Tips, Good Practices and Errors"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">soma-workflow version 3.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Status list</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2011-2021 CEA, Neurospin, France, CATI, France.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

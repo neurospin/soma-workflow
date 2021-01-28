@@ -1,0 +1,1646 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>client &#8212; soma-workflow version 3.1 documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="shortcut icon" href="../_static/icon_small.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">soma-workflow version 3.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">client</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for client</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">@author: Soizic Laguitton</span>
+
+<span class="sd">@organization: I2BM, Neurospin, Gif-sur-Yvette, France</span>
+<span class="sd">@organization: CATI, France</span>
+<span class="sd">@organization: U{IFR 49&lt;http://www.ifr49.org&gt;}</span>
+
+<span class="sd">@license: U{CeCILL version 2&lt;http://www.cecill.info/licences/Licence_CeCILL_V2-en.html&gt;}</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+
+<span class="c1">#-------------------------------------------------------------------------------</span>
+<span class="c1"># Imports</span>
+<span class="c1">#-------------------------------------------------------------------------</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">print_function</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">hashlib</span>
+<span class="kn">import</span> <span class="nn">stat</span>
+<span class="kn">import</span> <span class="nn">operator</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">import</span> <span class="nn">pickle</span>
+<span class="kn">import</span> <span class="nn">types</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">posixpath</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">six</span>
+<span class="kn">import</span> <span class="nn">tempfile</span>
+
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="c1"># import cProfile</span>
+<span class="c1"># import traceback</span>
+
+
+<span class="kn">import</span> <span class="nn">soma_workflow.connection</span> <span class="k">as</span> <span class="nn">connection</span>
+<span class="kn">from</span> <span class="nn">soma_workflow.transfer</span> <span class="kn">import</span> <span class="n">PortableRemoteTransfer</span><span class="p">,</span> <span class="n">TransferSCP</span><span class="p">,</span> <span class="n">TransferRsync</span><span class="p">,</span> <span class="n">TransferMonitoring</span><span class="p">,</span> <span class="n">TransferLocal</span>
+<span class="kn">import</span> <span class="nn">soma_workflow.constants</span> <span class="k">as</span> <span class="nn">constants</span>
+<span class="kn">import</span> <span class="nn">soma_workflow.configuration</span> <span class="k">as</span> <span class="nn">configuration</span>
+<span class="kn">from</span> <span class="nn">soma_workflow.errors</span> <span class="kn">import</span> <span class="n">TransferError</span><span class="p">,</span> <span class="n">SerializationError</span><span class="p">,</span> <span class="n">SomaWorkflowError</span>
+
+<span class="c1">#-------------------------------------------------------------------------------</span>
+<span class="c1"># Classes and functions</span>
+<span class="c1">#-------------------------------------------------------------------------</span>
+
+<span class="c1"># imports required by the users of soma-workflow API (do not remove):</span>
+<span class="kn">from</span> <span class="nn">soma_workflow.client_types</span> <span class="kn">import</span> <span class="n">Job</span>
+<span class="kn">from</span> <span class="nn">soma_workflow.client_types</span> <span class="kn">import</span> <span class="n">EngineExecutionJob</span>
+<span class="kn">from</span> <span class="nn">soma_workflow.custom_jobs</span> <span class="kn">import</span> <span class="n">BarrierJob</span>
+<span class="kn">from</span> <span class="nn">soma_workflow.custom_jobs</span> <span class="kn">import</span> <span class="n">MapJob</span>
+<span class="kn">from</span> <span class="nn">soma_workflow.custom_jobs</span> <span class="kn">import</span> <span class="n">ReduceJob</span>
+<span class="kn">from</span> <span class="nn">soma_workflow.custom_jobs</span> <span class="kn">import</span> <span class="n">ListCatJob</span>
+<span class="kn">from</span> <span class="nn">soma_workflow.custom_jobs</span> <span class="kn">import</span> <span class="n">LeaveOneOutJob</span>
+<span class="kn">from</span> <span class="nn">soma_workflow.custom_jobs</span> <span class="kn">import</span> <span class="n">CrossValidationFoldJob</span>
+<span class="kn">from</span> <span class="nn">soma_workflow.client_types</span> <span class="kn">import</span> <span class="n">Workflow</span>
+<span class="kn">from</span> <span class="nn">soma_workflow.client_types</span> <span class="kn">import</span> <span class="n">Group</span>
+<span class="kn">from</span> <span class="nn">soma_workflow.client_types</span> <span class="kn">import</span> <span class="n">FileTransfer</span>
+<span class="kn">from</span> <span class="nn">soma_workflow.client_types</span> <span class="kn">import</span> <span class="n">SharedResourcePath</span>
+<span class="kn">from</span> <span class="nn">soma_workflow.client_types</span> <span class="kn">import</span> <span class="n">TemporaryPath</span>
+<span class="kn">from</span> <span class="nn">soma_workflow.client_types</span> <span class="kn">import</span> <span class="n">SpecialPath</span>
+<span class="kn">from</span> <span class="nn">soma_workflow.client_types</span> <span class="kn">import</span> <span class="n">OptionPath</span>
+<span class="kn">from</span> <span class="nn">soma_workflow</span> <span class="kn">import</span> <span class="n">scheduler</span>
+
+
+<div class="viewcode-block" id="WorkflowController"><a class="viewcode-back" href="../client_API.html#client.WorkflowController">[docs]</a><span class="k">class</span> <span class="nc">WorkflowController</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Submission, control and monitoring of Job, FileTransfer and Workflow</span>
+<span class="sd">    objects.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="n">_connection</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">_engine_proxy</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">_transfer</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">_transfer_stdouterr</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">config</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">engine_config_proxy</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">_resource_id</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">scheduler_config</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="WorkflowController.__init__"><a class="viewcode-back" href="../client_API.html#client.WorkflowController.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">resource_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">login</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">password</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">config</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">rsa_key_pass</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Sets up the connection to the computing resource.</span>
+<span class="sd">        Looks for a soma-workflow configuration file (if not specified in the</span>
+<span class="sd">        *config* argument).</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">          The login and password are only required for a remote computing</span>
+<span class="sd">          resource.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        resource_id: str</span>
+<span class="sd">            Identifier of the computing resource to connect to.</span>
+<span class="sd">            If None, the number of cpu of the current machine is detected and</span>
+<span class="sd">            the basic scheduler is lauched.</span>
+
+<span class="sd">        login: str</span>
+<span class="sd">            Required if the computing resource is remote.</span>
+
+<span class="sd">        password: str</span>
+<span class="sd">            Required if the computing resource is remote and not RSA key where</span>
+<span class="sd">            configured to log on the remote machine with ssh.</span>
+
+<span class="sd">        config: configuration.Configuration</span>
+<span class="sd">            Optional configuration.</span>
+
+<span class="sd">        rsa_key_pass: str</span>
+<span class="sd">            Required if the RSA key is protected with a password.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="k">if</span> <span class="n">config</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">configuration</span><span class="o">.</span><span class="n">Configuration</span><span class="o">.</span><span class="n">load_from_file</span><span class="p">(</span>
+                <span class="n">resource_id</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
+
+        <span class="k">if</span> <span class="n">resource_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">resource_id</span> \
+                <span class="o">=</span> <span class="n">configuration</span><span class="o">.</span><span class="n">Configuration</span><span class="o">.</span><span class="n">get_local_resource_id</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">password</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+            <span class="n">password</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">scheduler_config</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="n">mode</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_mode</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_resource_id</span> <span class="o">=</span> <span class="n">resource_id</span>
+
+        <span class="c1"># LOCAL MODE</span>
+        <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="n">configuration</span><span class="o">.</span><span class="n">LOCAL_MODE</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;soma-workflow starting in local mode&quot;</span><span class="p">)</span>
+            <span class="c1"># setup logging</span>
+            <span class="p">(</span><span class="n">engine_log_dir</span><span class="p">,</span>
+             <span class="n">engine_log_format</span><span class="p">,</span>
+             <span class="n">engine_log_level</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_engine_log_info</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">engine_log_dir</span><span class="p">:</span>
+                <span class="n">logfilepath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">engine_log_dir</span><span class="p">),</span> <span class="s2">&quot;log_local_mode&quot;</span><span class="p">)</span>
+                <span class="n">log_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">logfilepath</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">log_dir</span><span class="p">):</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">log_dir</span><span class="p">)</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span>
+                    <span class="n">filename</span><span class="o">=</span><span class="n">logfilepath</span><span class="p">,</span>
+                    <span class="nb">format</span><span class="o">=</span><span class="n">engine_log_format</span><span class="p">,</span>
+                    <span class="n">level</span><span class="o">=</span><span class="nb">eval</span><span class="p">(</span><span class="s2">&quot;logging.&quot;</span> <span class="o">+</span> <span class="n">engine_log_level</span><span class="p">))</span>
+
+            <span class="n">trial</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">ok</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="c1"># several attempts are sometimes needed here:</span>
+            <span class="c1"># the local port is sometimes busy or something.</span>
+            <span class="c1"># We must wait for a timeout and the subsequent</span>
+            <span class="c1"># exception, then retry, and it often works...</span>
+            <span class="k">while</span> <span class="ow">not</span> <span class="n">ok</span> <span class="ow">and</span> <span class="n">trial</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="n">trial</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">LocalConnection</span><span class="p">(</span>
+                        <span class="n">resource_id</span><span class="p">,</span>
+                        <span class="s2">&quot;&quot;</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Local connection established&quot;</span><span class="p">)</span>
+                    <span class="n">ok</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">trial</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                        <span class="k">raise</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;LocalConnection failed to establish &#39;</span>
+                                 <span class="s1">&#39;- trying again&#39;</span><span class="p">)</span>
+                    <span class="kn">import</span> <span class="nn">time</span>
+                    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">1.</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="o">.</span><span class="n">get_workflow_engine</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">engine_config_proxy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="o">.</span><span class="n">get_configuration</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">scheduler_config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="o">.</span><span class="n">get_scheduler_config</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_transfer</span> <span class="o">=</span> <span class="n">TransferLocal</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_transfer_stdouterr</span> <span class="o">=</span> <span class="n">TransferLocal</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="p">)</span>
+
+        <span class="c1"># REMOTE MODE</span>
+        <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="n">configuration</span><span class="o">.</span><span class="n">REMOTE_MODE</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;soma-workflow starting in remote mode&quot;</span><span class="p">)</span>
+            <span class="n">submitting_machines</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_submitting_machines</span><span class="p">()</span>
+            <span class="n">sub_machine</span> <span class="o">=</span> <span class="n">submitting_machines</span><span class="p">[</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span>
+                <span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">submitting_machines</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>
+            <span class="n">cluster_address</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_cluster_address</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">login</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">login</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_login</span><span class="p">()</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;cluster address: </span><span class="si">%s</span><span class="s1">, submission machine: </span><span class="si">%s</span><span class="s1">, login: </span><span class="si">%s</span><span class="s1">&#39;</span>
+                  <span class="o">%</span> <span class="p">(</span><span class="n">cluster_address</span><span class="p">,</span> <span class="n">sub_machine</span><span class="p">,</span> <span class="n">login</span><span class="p">))</span>
+            <span class="n">trial</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">ok</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="c1"># several attempts are sometimes needed here:</span>
+            <span class="c1"># the paramiko transport and tunnel sometimes does not start</span>
+            <span class="c1"># correctly and remains silent (no communication can be done, no</span>
+            <span class="c1"># error reported). We must wait for a timeout and the subsequent</span>
+            <span class="c1"># exception, then retry, and it often works...</span>
+            <span class="k">while</span> <span class="ow">not</span> <span class="n">ok</span> <span class="ow">and</span> <span class="n">trial</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="n">trial</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">RemoteConnection</span><span class="p">(</span>
+                        <span class="n">login</span><span class="p">,</span>
+                        <span class="n">password</span><span class="p">,</span>
+                        <span class="n">cluster_address</span><span class="p">,</span>
+                        <span class="n">sub_machine</span><span class="p">,</span>
+                        <span class="n">resource_id</span><span class="p">,</span>
+                        <span class="s2">&quot;&quot;</span><span class="p">,</span>
+                        <span class="n">rsa_key_pass</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Remote connection established&quot;</span><span class="p">)</span>
+                    <span class="n">ok</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">trial</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                        <span class="k">raise</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;RemoteConnection failed to establish &#39;</span>
+                                 <span class="s1">&#39;- trying again&#39;</span><span class="p">)</span>
+                    <span class="kn">import</span> <span class="nn">time</span>
+                    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">1.</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="o">.</span><span class="n">get_workflow_engine</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">engine_config_proxy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="o">.</span><span class="n">get_configuration</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">scheduler_config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="o">.</span><span class="n">get_scheduler_config</span><span class="p">()</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">password</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">rsa_key_pass</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_transfer</span> <span class="o">=</span> <span class="n">TransferSCP</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="p">,</span>
+                                             <span class="n">username</span><span class="o">=</span><span class="n">login</span><span class="p">,</span>
+                                             <span class="n">hostname</span><span class="o">=</span><span class="n">sub_machine</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_transfer</span> <span class="o">=</span> <span class="n">PortableRemoteTransfer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_transfer_stdouterr</span> <span class="o">=</span> <span class="n">PortableRemoteTransfer</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="p">)</span>
+
+        <span class="c1"># LIGHT MODE</span>
+        <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="n">configuration</span><span class="o">.</span><span class="n">LIGHT_MODE</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;soma-workflow starting in light mode&quot;</span><span class="p">)</span>
+            <span class="n">local_scdl_cfg_path</span> \
+                <span class="o">=</span> <span class="n">configuration</span><span class="o">.</span><span class="n">LocalSchedulerCfg</span><span class="o">.</span><span class="n">search_config_path</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">local_scdl_cfg_path</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">cpu_count</span> <span class="o">=</span> <span class="n">Helper</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">scheduler_config</span> <span class="o">=</span> <span class="n">configuration</span><span class="o">.</span><span class="n">LocalSchedulerCfg</span><span class="p">(</span>
+                    <span class="n">proc_nb</span><span class="o">=</span><span class="n">cpu_count</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">scheduler_config</span> \
+                    <span class="o">=</span> <span class="n">configuration</span><span class="o">.</span><span class="n">LocalSchedulerCfg</span><span class="o">.</span><span class="n">load_from_file</span><span class="p">(</span>
+                        <span class="n">local_scdl_cfg_path</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set_scheduler_config</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scheduler_config</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span> <span class="o">=</span> <span class="n">_embedded_engine_and_server</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">engine_config_proxy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_transfer</span> <span class="o">=</span> <span class="n">TransferLocal</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_transfer_stdouterr</span> <span class="o">=</span> <span class="n">TransferLocal</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_transfer_monitoring</span> <span class="o">=</span> <span class="n">TransferMonitoring</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Workflow controller initialised&quot;</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="fm">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;del WorkflowController&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stop_engine</span><span class="p">()</span>
+        <span class="c1">#try:</span>
+            <span class="c1">#import gc</span>
+            <span class="c1">#gc.collect()</span>
+        <span class="c1">#except Exception:</span>
+            <span class="c1">#pass</span>
+
+    <span class="k">def</span> <span class="nf">get_scheduler_type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Returns the scheduler type in the underlying engine (&#39;local_basic&#39;,</span>
+<span class="sd">        &#39;pbs&#39;, &#39;pbspro&#39;, &#39;drmaa&#39; ...)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">engine_config_proxy</span><span class="o">.</span><span class="n">get_scheduler_type</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">disconnect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Simulates a disconnection for TEST PURPOSE ONLY.</span>
+<span class="sd">        !!! The current instance will not be usable anymore after this call !!!!</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">stop_engine</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_transfer_monitoring&#39;</span><span class="p">)</span> \
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transfer_monitoring</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transfer_monitoring</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_transfer&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transfer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transfer</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_transfer_stdouterr&#39;</span><span class="p">)</span> \
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transfer_stdouterr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transfer_stdouterr</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;engine_config_proxy&#39;</span><span class="p">)</span> \
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">engine_config_proxy</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">engine_config_proxy</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;scheduler_config&#39;</span><span class="p">)</span> \
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">scheduler_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">scheduler_config</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="p">,</span> <span class="s1">&#39;interrupt_after&#39;</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">interrupt_after</span><span class="p">(</span><span class="mf">10.</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="k">pass</span>  <span class="c1"># cleanup anyway</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">disconnect</span><span class="p">()</span>
+
+    <span class="c1"># SUBMISSION / REGISTRATION ####################################</span>
+<div class="viewcode-block" id="WorkflowController.submit_workflow"><a class="viewcode-back" href="../client_API.html#client.WorkflowController.submit_workflow">[docs]</a>    <span class="k">def</span> <span class="nf">submit_workflow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                        <span class="n">workflow</span><span class="p">,</span>
+                        <span class="n">expiration_date</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                        <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                        <span class="n">queue</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Submits a workflow and returns a workflow identifier.</span>
+
+<span class="sd">        Raises *WorkflowError* or *JobError* if the workflow is not correct.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        workflow: client.Workflow</span>
+<span class="sd">            Workflow description.</span>
+
+<span class="sd">        expiration_date: *datetime.datetime*</span>
+<span class="sd">            After this date the workflow will be deleted.</span>
+
+<span class="sd">        name: str</span>
+<span class="sd">            Optional workflow name.</span>
+
+<span class="sd">        queue: str</span>
+<span class="sd">            Optional name of the queue where to submit jobs. If it is not</span>
+<span class="sd">            specified the jobs will be submitted to the default queue.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Workflow_identifier: int</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">engine_config_proxy</span><span class="o">.</span><span class="n">get_scheduler_type</span><span class="p">()</span> \
+                <span class="o">==</span> <span class="n">configuration</span><span class="o">.</span><span class="n">MPI_SCHEDULER</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SomaWorkflowError</span><span class="p">(</span>
+                <span class="s2">&quot;The MPI scheduler is configured for this resource. &quot;</span>
+                <span class="s2">&quot;Use soma_workflow.MPI_workflow_runner to submit a workflow &quot;</span>
+                <span class="s2">&quot;using the MPI scheduler.&quot;</span><span class="p">)</span>
+
+        <span class="c1"># cProfile.runctx(&quot;wf_id = self._engine_proxy.submit_workflow(workflow,</span>
+        <span class="c1"># expiration_date, name, queue)&quot;, globals(), locals(),</span>
+        <span class="c1"># &quot;/home/soizic/profile/profile_submit_workflow&quot;)</span>
+
+        <span class="n">wf_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">submit_workflow</span><span class="p">(</span><span class="n">workflow</span><span class="p">,</span>
+                                                   <span class="n">expiration_date</span><span class="p">,</span>
+                                                   <span class="n">name</span><span class="p">,</span>
+                                                   <span class="n">queue</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">wf_id</span></div>
+
+<div class="viewcode-block" id="WorkflowController.register_transfer"><a class="viewcode-back" href="../client_API.html#client.WorkflowController.register_transfer">[docs]</a>    <span class="k">def</span> <span class="nf">register_transfer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_transfer</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Registers a file transfer which is not part of a workflow and returns a</span>
+<span class="sd">        file transfer identifier.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        file_transfer: client.FileTransfer</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        transfer: EngineTransfer</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">engine_transfer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">register_transfer</span><span class="p">(</span><span class="n">file_transfer</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">engine_transfer</span></div>
+
+    <span class="c1"># WORKFLOWS, JOBS and FILE TRANSFERS RETRIEVAL ###################</span>
+
+<div class="viewcode-block" id="WorkflowController.workflow"><a class="viewcode-back" href="../client_API.html#client.WorkflowController.workflow">[docs]</a>    <span class="k">def</span> <span class="nf">workflow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">workflow_id</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Raises *UnknownObjectError* if the workflow_id is not valid</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        workflow_id: workflow_identifier</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Workflow</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">workflow</span><span class="p">(</span><span class="n">workflow_id</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="WorkflowController.workflows"><a class="viewcode-back" href="../client_API.html#client.WorkflowController.workflows">[docs]</a>    <span class="k">def</span> <span class="nf">workflows</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">workflow_ids</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Lists the identifiers and general information about all the workflows</span>
+<span class="sd">        submitted by the user, or about the workflows specified in the</span>
+<span class="sd">        *workflow_ids* argument.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        workflow_ids: sequence of workflow identifiers</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        workflows: dictionary: workflow identifier -&gt; tuple(date, string)</span>
+<span class="sd">            workflow_id -&gt; (workflow_name, expiration_date)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">workflows</span><span class="p">(</span><span class="n">workflow_ids</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="WorkflowController.jobs"><a class="viewcode-back" href="../client_API.html#client.WorkflowController.jobs">[docs]</a>    <span class="k">def</span> <span class="nf">jobs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_ids</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Lists the identifiers and general information about all the jobs</span>
+<span class="sd">        submitted by the user and which are not part of a workflow, or about</span>
+<span class="sd">        the jobs specified in the *job_ids* argument.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        job_ids: sequence of job identifiers</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        jobs: dictionary: job identifiers -&gt; tuple(string, string, date)</span>
+<span class="sd">            job_id -&gt; (name, command, submission date)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">jobs</span><span class="p">(</span><span class="n">job_ids</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="WorkflowController.transfers"><a class="viewcode-back" href="../client_API.html#client.WorkflowController.transfers">[docs]</a>    <span class="k">def</span> <span class="nf">transfers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transfer_ids</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Lists the identifiers and information about all the user&#39;s file</span>
+<span class="sd">        transfers which are not part of a workflow or about the file transfers</span>
+<span class="sd">        specified in the *transfer_ids* argument.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        transfer_ids: sequence of FileTransfer identifiers</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        transfers: dictionary: str -&gt; tuple(str, date, None or sequence of str)</span>
+<span class="sd">            transfer_id -&gt; (</span>
+<span class="sd">                            * client_path: client file or directory path</span>
+<span class="sd">                            * expiration_date: after this date the file copied</span>
+<span class="sd">                              on the computing resource and all the transfer</span>
+<span class="sd">                              information will be deleted, unless an existing</span>
+<span class="sd">                              job has declared this file as output or input.</span>
+<span class="sd">                            * client_paths: sequence of file or directory path</span>
+<span class="sd">                              or None)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">transfers</span><span class="p">(</span><span class="n">transfer_ids</span><span class="p">)</span></div>
+
+    <span class="c1"># WORKFLOW MONITORING #########################################</span>
+
+<div class="viewcode-block" id="WorkflowController.workflow_status"><a class="viewcode-back" href="../client_API.html#client.WorkflowController.workflow_status">[docs]</a>    <span class="k">def</span> <span class="nf">workflow_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">workflow_id</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Raises *UnknownObjectError* if the workflow_id is not valid</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        workflow_id: workflow identifier</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        status: str or None</span>
+<span class="sd">            Status of the workflow: see :ref:`workflow-status` or the</span>
+<span class="sd">            constants.WORKFLOW_STATUS list.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">workflow_status</span><span class="p">(</span><span class="n">workflow_id</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="WorkflowController.workflow_elements_status"><a class="viewcode-back" href="../client_API.html#client.WorkflowController.workflow_elements_status">[docs]</a>    <span class="k">def</span> <span class="nf">workflow_elements_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">workflow_id</span><span class="p">,</span> <span class="n">with_drms_id</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Gets back the status of all the workflow elements at once, minimizing</span>
+<span class="sd">        the communication with the server and request to the database.</span>
+<span class="sd">        TO DO =&gt; make it more user friendly.</span>
+
+<span class="sd">        Note: in Soma-Workflow 3.0, the last job info (drmaa_id) has been added</span>
+<span class="sd">        to job status tuple.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        workflow_id: workflow_identifier</span>
+<span class="sd">        with_drms_id: bool (optional, default=True)</span>
+<span class="sd">            if True the DRMS id (drmaa_id) is also included in the returned</span>
+<span class="sd">            tuple for each job. This info has been added in soma_workflow 3.0</span>
+<span class="sd">            and is thus optional to avoid breaking compatibility with earlier</span>
+<span class="sd">            versions.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        status: tuple:</span>
+<span class="sd">            * sequence of tuple</span>
+<span class="sd">                (job_id, status, queue, exit_info,</span>
+<span class="sd">                    (submission_date, execution_date, ending_date, drmaa_id),</span>
+<span class="sd">                    [drms_id]),</span>
+<span class="sd">            * sequence of tuple</span>
+<span class="sd">                (transfer_id, (status, progression_info, engine_path,</span>
+<span class="sd">                 client_path, client_paths)),</span>
+<span class="sd">            * workflow_status,</span>
+<span class="sd">            * workflow_queue,</span>
+<span class="sd">            * sequence of tuple (temp_path_id, engine_path, status)</span>
+
+<span class="sd">        Raises *UnknownObjectError* if the workflow_id is not valid</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">wf_status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">workflow_elements_status</span><span class="p">(</span>
+            <span class="n">workflow_id</span><span class="p">,</span> <span class="n">with_drms_id</span><span class="o">=</span><span class="n">with_drms_id</span><span class="p">)</span>
+        <span class="c1"># special processing for transfer status:</span>
+        <span class="n">new_transfer_status</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">transfer_id</span><span class="p">,</span> <span class="n">engine_path</span><span class="p">,</span> <span class="n">client_path</span><span class="p">,</span> <span class="n">client_paths</span><span class="p">,</span> <span class="n">status</span><span class="p">,</span> \
+                <span class="n">transfer_type</span> <span class="ow">in</span> <span class="n">wf_status</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="n">progression</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transfer_progression</span><span class="p">(</span><span class="n">status</span><span class="p">,</span>
+                                                     <span class="n">transfer_type</span><span class="p">,</span>
+                                                     <span class="n">client_path</span><span class="p">,</span>
+                                                     <span class="n">client_paths</span><span class="p">,</span>
+                                                     <span class="n">engine_path</span><span class="p">)</span>
+
+            <span class="n">new_transfer_status</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">transfer_id</span><span class="p">,</span>
+                                        <span class="p">(</span><span class="n">status</span><span class="p">,</span> <span class="n">progression</span><span class="p">,</span> <span class="n">engine_path</span><span class="p">,</span>
+                                         <span class="n">client_path</span><span class="p">,</span> <span class="n">client_paths</span><span class="p">)))</span>
+
+        <span class="n">new_wf_status</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">wf_status</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">new_transfer_status</span><span class="p">,</span> <span class="n">wf_status</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">wf_status</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span>
+            <span class="n">wf_status</span><span class="p">[</span><span class="mi">4</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">new_wf_status</span></div>
+
+    <span class="c1"># JOB MONITORING #############################################</span>
+<div class="viewcode-block" id="WorkflowController.job_status"><a class="viewcode-back" href="../client_API.html#client.WorkflowController.job_status">[docs]</a>    <span class="k">def</span> <span class="nf">job_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_id</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        job_id: job identifier</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        status: str</span>
+<span class="sd">            Status of the job: see :ref:`job-status` or the list</span>
+<span class="sd">            constants.JOB_STATUS.</span>
+
+<span class="sd">        Raises *UnknownObjectError* if the job_id is not valid</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">job_status</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">get_engine_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_id</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">get_engine_job</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_job_command</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_id</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Get a job commandline from the database</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">get_job_command</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">updated_job_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_id</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">updated_job_parameters</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_job_output_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_id</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">get_job_output_params</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">drms_job_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wf_id</span><span class="p">,</span> <span class="n">job_id</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">drms_job_id</span><span class="p">(</span><span class="n">wf_id</span><span class="p">,</span> <span class="n">job_id</span><span class="p">)</span>
+
+<div class="viewcode-block" id="WorkflowController.job_termination_status"><a class="viewcode-back" href="../client_API.html#client.WorkflowController.job_termination_status">[docs]</a>    <span class="k">def</span> <span class="nf">job_termination_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_id</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Information related to the end of the job.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        job_id: job identifier</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        status: tuple(str, int or None, str or None, str) or None</span>
+<span class="sd">            * exit status: status of the terminated job: see</span>
+<span class="sd">              :ref:`job-exit-status` or the constants.JOB_EXIT_STATUS list.</span>
+<span class="sd">            * exit value: operating system exit code of the job if the job</span>
+<span class="sd">              terminated normally.</span>
+<span class="sd">            * terminating signal: representation of the signal that caused the</span>
+<span class="sd">              termination of the job if the job terminated due to the receipt</span>
+<span class="sd">              of a signal.</span>
+<span class="sd">            * resource usage: resource usage information provided as an array</span>
+<span class="sd">              of strings where each string complies with the format</span>
+<span class="sd">              &lt;name&gt;=&lt;value&gt;.</span>
+<span class="sd">              The information provided depends on the DRMS and DRMAA</span>
+<span class="sd">              implementation.</span>
+
+<span class="sd">        Raises *UnknownObjectError* if the job_id is not valid</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">job_termination_status</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="WorkflowController.retrieve_job_stdouterr"><a class="viewcode-back" href="../client_API.html#client.WorkflowController.retrieve_job_stdouterr">[docs]</a>    <span class="k">def</span> <span class="nf">retrieve_job_stdouterr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                               <span class="n">job_id</span><span class="p">,</span>
+                               <span class="n">stdout_file_path</span><span class="p">,</span>
+                               <span class="n">stderr_file_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                               <span class="n">buffer_size</span><span class="o">=</span><span class="mi">512</span> <span class="o">**</span> <span class="mi">2</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Copies the job standard output and error to specified file.</span>
+
+<span class="sd">        Raises *UnknownObjectError* if the job_id is not valid</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        job_id: job identifier</span>
+
+<span class="sd">        stdout_file_path: str</span>
+<span class="sd">            Path of the file where to copy the standard output.</span>
+
+<span class="sd">        stderr_file_path: str</span>
+<span class="sd">            Path of the file where to copy the standard error.</span>
+
+<span class="sd">        buffer_size: int</span>
+<span class="sd">            The file is transfered piece by piece of size buffer_size.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">stdout_file_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">stdout_file_path</span><span class="p">)</span>
+        <span class="n">stderr_file_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">stderr_file_path</span><span class="p">)</span>
+        <span class="p">(</span><span class="n">engine_stdout_file</span><span class="p">,</span>
+         <span class="n">engine_stderr_file</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">stdouterr_file_path</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_transfer_stdouterr</span><span class="o">.</span><span class="n">transfer_from_remote</span><span class="p">(</span><span class="n">engine_stdout_file</span><span class="p">,</span>
+                                                      <span class="n">stdout_file_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_transfer_stdouterr</span><span class="o">.</span><span class="n">transfer_from_remote</span><span class="p">(</span><span class="n">engine_stderr_file</span><span class="p">,</span>
+                                                      <span class="n">stderr_file_path</span><span class="p">)</span></div>
+
+    <span class="c1"># FILE TRANSFER MONITORING ###################################</span>
+<div class="viewcode-block" id="WorkflowController.transfer_status"><a class="viewcode-back" href="../client_API.html#client.WorkflowController.transfer_status">[docs]</a>    <span class="k">def</span> <span class="nf">transfer_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transfer_id</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        File transfer status and information related to the transfer progress.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        transfer_id: transfer identifier</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        status: tuple(transfer_status or None, tuple or None)</span>
+<span class="sd">            * Status of the file transfer : see :ref:`file-transfer-status` or</span>
+<span class="sd">              the constants.FILE_TRANSFER_STATUS list.</span>
+<span class="sd">            * None if the transfer status in not</span>
+<span class="sd">              constants.TRANSFERING_FROM_CLIENT_TO_CR or</span>
+<span class="sd">              constants.TRANSFERING_FROM_CR_TO_CLIENT.</span>
+<span class="sd">              tuple (file size, size already transfered) if it is a file</span>
+<span class="sd">              transfer.</span>
+<span class="sd">              tuple (cumulated size, sequence of tuple (relative_path,</span>
+<span class="sd">              file_size, size already transfered) if it is a directory</span>
+<span class="sd">              transfer.</span>
+
+<span class="sd">        Raises *UnknownObjectError* if the transfer_id is not valid</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="p">(</span><span class="n">transfer_id</span><span class="p">,</span>
+         <span class="n">engine_path</span><span class="p">,</span>
+         <span class="n">client_path</span><span class="p">,</span>
+         <span class="n">expiration_date</span><span class="p">,</span>
+         <span class="n">workflow_id</span><span class="p">,</span>
+         <span class="n">client_paths</span><span class="p">,</span>
+         <span class="n">transfer_type</span><span class="p">,</span>
+         <span class="n">status</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">transfer_information</span><span class="p">(</span><span class="n">transfer_id</span><span class="p">)</span>
+        <span class="n">progression</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transfer_progression</span><span class="p">(</span><span class="n">status</span><span class="p">,</span>
+                                                 <span class="n">transfer_type</span><span class="p">,</span>
+                                                 <span class="n">client_path</span><span class="p">,</span>
+                                                 <span class="n">client_paths</span><span class="p">,</span>
+                                                 <span class="n">engine_path</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">(</span><span class="n">status</span><span class="p">,</span> <span class="n">progression</span><span class="p">)</span></div>
+
+    <span class="c1"># WORKFLOW CONTROL ############################################</span>
+<div class="viewcode-block" id="WorkflowController.restart_workflow"><a class="viewcode-back" href="../client_API.html#client.WorkflowController.restart_workflow">[docs]</a>    <span class="k">def</span> <span class="nf">restart_workflow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">workflow_id</span><span class="p">,</span> <span class="n">queue</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Restarts the jobs of the workflow which failed. The jobs will be</span>
+<span class="sd">        submitted again.</span>
+<span class="sd">        The workflow status has to be constants.WORKFLOW_DONE.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        workflow_id: workflow identifier</span>
+
+<span class="sd">        queue: str</span>
+<span class="sd">            Optional name of the queue where to submit jobs. If it is not</span>
+<span class="sd">            specified the jobs will be submitted to the default queue.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        success: bool</span>
+<span class="sd">            True if some jobs were restarted.</span>
+
+<span class="sd">        Raises *UnknownObjectError* if the workflow_id is not valid</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">engine_config_proxy</span><span class="o">.</span><span class="n">get_scheduler_type</span><span class="p">()</span> \
+                <span class="o">==</span> <span class="n">configuration</span><span class="o">.</span><span class="n">MPI_SCHEDULER</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SomaWorkflowError</span><span class="p">(</span>
+                <span class="s2">&quot;The MPI scheduler is configured for this resource. &quot;</span>
+                <span class="s2">&quot;Use soma_workflow.MPI_workflow_runner to restart a workflow &quot;</span>
+                <span class="s2">&quot;using the MPI scheduler.&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">restart_workflow</span><span class="p">(</span><span class="n">workflow_id</span><span class="p">,</span> <span class="n">queue</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="WorkflowController.delete_workflow"><a class="viewcode-back" href="../client_API.html#client.WorkflowController.delete_workflow">[docs]</a>    <span class="k">def</span> <span class="nf">delete_workflow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">workflow_id</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Deletes the workflow and all its associated elements (FileTransfers and</span>
+<span class="sd">        Jobs). The worklfow_id will become invalid and can not be used anymore.</span>
+<span class="sd">        The workflow jobs which are running will be killed.</span>
+<span class="sd">        If force is set to True: the call will block until the workflow is</span>
+<span class="sd">        deleted. With force set to True, if the workflow can not be deleted</span>
+<span class="sd">        properly it is deleted from Soma-workflow database. However, if some</span>
+<span class="sd">        jobs are still running they are not be killed. In this case the return</span>
+<span class="sd">        value is False.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        workflow_id: workflow_identifier</span>
+
+<span class="sd">        force: bool</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        success: bool</span>
+
+<span class="sd">        Raises *UnknownObjectError* if the workflow_id is not valid</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1"># cProfile.runctx(&quot;self._engine_proxy.delete_workflow(workflow_id)&quot;,</span>
+        <span class="c1"># globals(), locals(), &quot;/home/soizic/profile/profile_delete_workflow&quot;)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">delete_workflow</span><span class="p">(</span><span class="n">workflow_id</span><span class="p">,</span> <span class="n">force</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="WorkflowController.stop_workflow"><a class="viewcode-back" href="../client_API.html#client.WorkflowController.stop_workflow">[docs]</a>    <span class="k">def</span> <span class="nf">stop_workflow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">workflow_id</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Stops a workflow.</span>
+<span class="sd">        The running jobs will be killed.</span>
+<span class="sd">        The jobs in queues will be removed from queues.</span>
+<span class="sd">        It will be possible to restart the workflow afterwards.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        success: bool</span>
+<span class="sd">            returns True if the running jobs were killed and False</span>
+<span class="sd">            if some jobs are possibly still running on the computing resource</span>
+<span class="sd">            despite the workflow was stopped.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">engine_config_proxy</span><span class="o">.</span><span class="n">get_scheduler_type</span><span class="p">()</span> \
+                <span class="o">==</span> <span class="n">configuration</span><span class="o">.</span><span class="n">MPI_SCHEDULER</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SomaWorkflowError</span><span class="p">(</span>
+                <span class="s2">&quot;The MPI scheduler is configured for this resource. &quot;</span>
+                <span class="s2">&quot;Kill the soma_workflow.MPI_workflow_runner job to stop the &quot;</span>
+                <span class="s2">&quot;workflow.&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">stop_workflow</span><span class="p">(</span><span class="n">workflow_id</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">stop_jobs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">workflow_id</span><span class="p">,</span> <span class="n">job_ids</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">stop_jobs</span><span class="p">(</span><span class="n">workflow_id</span><span class="p">,</span> <span class="n">job_ids</span><span class="p">)</span>
+
+<div class="viewcode-block" id="WorkflowController.restart_jobs"><a class="viewcode-back" href="../client_API.html#client.WorkflowController.restart_jobs">[docs]</a>    <span class="k">def</span> <span class="nf">restart_jobs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">workflow_id</span><span class="p">,</span> <span class="n">job_ids</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">restart_jobs</span><span class="p">(</span><span class="n">workflow_id</span><span class="p">,</span> <span class="n">job_ids</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="WorkflowController.change_workflow_expiration_date"><a class="viewcode-back" href="../client_API.html#client.WorkflowController.change_workflow_expiration_date">[docs]</a>    <span class="k">def</span> <span class="nf">change_workflow_expiration_date</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">workflow_id</span><span class="p">,</span>
+                                        <span class="n">new_expiration_date</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Sets a new expiration date for the workflow.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        workflow_id: workflow identifier</span>
+
+<span class="sd">        new_expiration_date: datetime.datetime</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        success: bool</span>
+<span class="sd">            True if the expiration date was changed.</span>
+
+<span class="sd">        Raises *UnknownObjectError* if the workflow_id is not valid</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">change_workflow_expiration_date</span><span class="p">(</span>
+            <span class="n">workflow_id</span><span class="p">,</span> <span class="n">new_expiration_date</span><span class="p">)</span></div>
+
+    <span class="c1"># JOB CONTROL #################################################</span>
+<div class="viewcode-block" id="WorkflowController.wait_job"><a class="viewcode-back" href="../client_API.html#client.WorkflowController.wait_job">[docs]</a>    <span class="k">def</span> <span class="nf">wait_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_ids</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Waits for all the specified jobs to finish.</span>
+
+<span class="sd">        Raises *UnknownObjectError* if the job_id is not valid</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        job_ids: sequence of job identifier</span>
+<span class="sd">            Jobs to wait for.</span>
+
+<span class="sd">        timeout: int</span>
+<span class="sd">            The call to wait_job exits before timeout seconds.</span>
+<span class="sd">            A negative value means that the method will wait indefinetely.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">wait_job</span><span class="p">(</span><span class="n">job_ids</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="WorkflowController.wait_workflow"><a class="viewcode-back" href="../client_API.html#client.WorkflowController.wait_workflow">[docs]</a>    <span class="k">def</span> <span class="nf">wait_workflow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">workflow_id</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Waits for the specified workflow to finish.</span>
+
+<span class="sd">        Raises *UnknownObjectError* if the job_id is not valid</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        workflow_id: workflow identifier</span>
+<span class="sd">            Jobs to wait for.</span>
+
+<span class="sd">        timeout: int</span>
+<span class="sd">            The call to wait_job exits before timeout seconds.</span>
+<span class="sd">            A negative value means that the method will wait indefinetely.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">wait_workflow</span><span class="p">(</span><span class="n">workflow_id</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">log_failed_workflow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">workflow_id</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        If the workflow has any failed job, log their status and outputs in the</span>
+<span class="sd">        given file.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">workflow_status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">workflow_status</span><span class="p">(</span><span class="n">workflow_id</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">workflow_status</span> <span class="o">!=</span> <span class="n">constants</span><span class="o">.</span><span class="n">WORKFLOW_DONE</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;** Workflow did not finish regularly: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">workflow_status</span><span class="p">,</span>
+                  <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;** Workflow status OK&#39;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+        <span class="n">elements_status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">workflow_elements_status</span><span class="p">(</span><span class="n">workflow_id</span><span class="p">)</span>
+        <span class="n">failed_jobs</span> <span class="o">=</span> <span class="p">[</span><span class="n">element</span> <span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">elements_status</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                       <span class="k">if</span> <span class="n">element</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">constants</span><span class="o">.</span><span class="n">FAILED</span>
+                       <span class="ow">or</span> <span class="p">(</span><span class="n">element</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">constants</span><span class="o">.</span><span class="n">DONE</span> <span class="ow">and</span>
+                           <span class="p">(</span><span class="n">element</span><span class="p">[</span><span class="mi">3</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+                            <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="n">constants</span><span class="o">.</span><span class="n">FINISHED_REGULARLY</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                            <span class="ow">or</span> <span class="n">element</span><span class="p">[</span><span class="mi">3</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">))]</span>
+        <span class="n">failed_jobs_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">jobs</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">element</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">failed_jobs</span>
+             <span class="k">if</span> <span class="n">element</span><span class="p">[</span><span class="mi">3</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">constants</span><span class="o">.</span><span class="n">EXIT_NOTRUN</span><span class="p">])</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">failed_jobs</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># failure</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;** Jobs failure, the following jobs ended with failed &#39;</span>
+                  <span class="s1">&#39;status:&#39;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">failed_jobs</span><span class="p">:</span>
+                <span class="c1"># skip those aborted for their dependencies</span>
+                <span class="k">if</span> <span class="n">element</span><span class="p">[</span><span class="mi">3</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">constants</span><span class="o">.</span><span class="n">EXIT_NOTRUN</span><span class="p">:</span>
+                    <span class="n">job</span> <span class="o">=</span> <span class="n">failed_jobs_info</span><span class="p">[</span><span class="n">element</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;+ job:&#39;</span><span class="p">,</span> <span class="n">job</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;, status:&#39;</span><span class="p">,</span> <span class="n">element</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                          <span class="s1">&#39;, exit:&#39;</span><span class="p">,</span> <span class="n">element</span><span class="p">[</span><span class="mi">3</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+                          <span class="s1">&#39;, value:&#39;</span><span class="p">,</span> <span class="n">element</span><span class="p">[</span><span class="mi">3</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span>
+                          <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;  commandline:&#39;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="n">job</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">** Failed jobs outputs:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+            <span class="c1"># log outputs</span>
+            <span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">failed_jobs</span><span class="p">:</span>
+                <span class="c1"># skip those aborted for their dependencies</span>
+                <span class="k">if</span> <span class="n">element</span><span class="p">[</span><span class="mi">3</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">constants</span><span class="o">.</span><span class="n">EXIT_NOTRUN</span><span class="p">:</span>
+                    <span class="n">job</span> <span class="o">=</span> <span class="n">failed_jobs_info</span><span class="p">[</span><span class="n">element</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+                    <span class="n">ejob</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_engine_job</span><span class="p">(</span><span class="n">element</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                    <span class="k">if</span> <span class="n">ejob</span><span class="o">.</span><span class="n">env</span><span class="p">:</span>
+                        <span class="n">env</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">ejob</span><span class="o">.</span><span class="n">env</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">env</span> <span class="o">=</span> <span class="p">{}</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;+ job </span><span class="si">%d</span><span class="s1">:&#39;</span> <span class="o">%</span> <span class="n">element</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">job</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                          <span class="s1">&#39;, status:&#39;</span><span class="p">,</span> <span class="n">element</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                          <span class="s1">&#39;, exit:&#39;</span><span class="p">,</span> <span class="n">element</span><span class="p">[</span><span class="mi">3</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+                          <span class="s1">&#39;, value:&#39;</span><span class="p">,</span> <span class="n">element</span><span class="p">[</span><span class="mi">3</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span>
+                          <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span>
+                        <span class="s1">&#39;  =================================================&#39;</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;  commandline:&#39;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;  ------------:&#39;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="n">job</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">  input parameters:&#39;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;  -----------------&#39;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">updated_job_parameters</span><span class="p">(</span><span class="n">element</span><span class="p">[</span><span class="mi">0</span><span class="p">]))),</span>
+                          <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+                    <span class="n">in_param_file</span> <span class="o">=</span> <span class="n">ejob</span><span class="o">.</span><span class="n">plain_input_params_file</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="n">in_param_file</span><span class="p">:</span>
+                        <span class="n">env</span><span class="p">[</span><span class="s1">&#39;SOMAWF_INPUT_PARAMS&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">in_param_file</span>
+                    <span class="n">out_param_file</span> <span class="o">=</span> <span class="n">ejob</span><span class="o">.</span><span class="n">plain_output_params_file</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="n">out_param_file</span><span class="p">:</span>
+                        <span class="n">env</span><span class="p">[</span><span class="s1">&#39;SOMAWF_OUTPUT_PARAMS&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">out_param_file</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">  output parameters:&#39;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;  ------------------&#39;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_job_output_params</span><span class="p">(</span><span class="n">element</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">  environment:&#39;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;  ------------&#39;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+
+                    <span class="n">tmp_stdout</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkstemp</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s1">&#39;swf_job_stdout_&#39;</span><span class="p">)</span>
+                    <span class="n">tmp_stderr</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkstemp</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s1">&#39;swf_job_stderr_&#39;</span><span class="p">)</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">tmp_stdout</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">tmp_stderr</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">retrieve_job_stdouterr</span><span class="p">(</span><span class="n">element</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">tmp_stdout</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                                                <span class="n">tmp_stderr</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">  standard output:&#39;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;  ----------------</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+                    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">tmp_stdout</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">(),</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">tmp_stdout</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">  standard error:&#39;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;  ---------------</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+                    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">tmp_stderr</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">(),</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">tmp_stderr</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;---- full host env ----&#39;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">workflow_status</span> <span class="o">==</span> <span class="n">constants</span><span class="o">.</span><span class="n">WORKFLOW_DONE</span> \
+            <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">failed_jobs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
+
+    <span class="c1"># FILE TRANSFER CONTROL #######################################</span>
+<div class="viewcode-block" id="WorkflowController.transfer_files"><a class="viewcode-back" href="../client_API.html#client.WorkflowController.transfer_files">[docs]</a>    <span class="k">def</span> <span class="nf">transfer_files</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transfer_ids</span><span class="p">,</span> <span class="n">buffer_size</span><span class="o">=</span><span class="mi">512</span> <span class="o">**</span> <span class="mi">2</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Transfer file(s) associated to the transfer_id.</span>
+<span class="sd">        If the files are only located on the client side (that is the transfer</span>
+<span class="sd">        status is constants.FILES_ON_CLIENT) the file(s) will be transfered</span>
+<span class="sd">        from the client to the computing resource.</span>
+<span class="sd">        If the files are located on the computing resource side (that is the</span>
+<span class="sd">        transfer status is constants.FILES_ON_CR or</span>
+<span class="sd">        constants.FILES_ON_CLIENT_AND_CR)</span>
+<span class="sd">        the files will be transfered from the computing resource to the client.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        transfer_id: FileTransfer identifier</span>
+
+<span class="sd">        buffer_size: int</span>
+<span class="sd">            Depending on the transfer method, the files can be transfered piece</span>
+<span class="sd">            by piece. The size of each piece can be tuned using the buffer_size</span>
+<span class="sd">            argument.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        success: bool</span>
+<span class="sd">            The transfer was done. (TBI right error management)</span>
+
+<span class="sd">        Raises *UnknownObjectError* if the transfer_id is not valid</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1"># Raises *TransferError*</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transfer_ids</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">transfer_id</span> <span class="ow">in</span> <span class="n">transfer_ids</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_transfer_file</span><span class="p">(</span><span class="n">transfer_id</span><span class="p">,</span> <span class="n">buffer_size</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_transfer_file</span><span class="p">(</span><span class="n">transfer_ids</span><span class="p">,</span> <span class="n">buffer_size</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="WorkflowController.delete_transfer"><a class="viewcode-back" href="../client_API.html#client.WorkflowController.delete_transfer">[docs]</a>    <span class="k">def</span> <span class="nf">delete_transfer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transfer_id</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Deletes the FileTransfer and the associated files and directories on</span>
+<span class="sd">        the computing resource side. The transfer_id will become invalid and</span>
+<span class="sd">        can not be used anymore. If some jobs reference the FileTransfer as an</span>
+<span class="sd">        input or an output the FileTransfer will not be deleted immediately but</span>
+<span class="sd">        as soon as these jobs will be deleted.</span>
+
+<span class="sd">        Raises *UnknownObjectError* if the transfer_id is not valid</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">delete_transfer</span><span class="p">(</span><span class="n">transfer_id</span><span class="p">)</span></div>
+
+    <span class="c1"># PRIVATE #############################################</span>
+    <span class="k">def</span> <span class="nf">_initialize_transfer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transfer_id</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Initializes the transfer and returns the transfer action information.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        transfer_id: FileTransfer identifier</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        transfer: tuple</span>
+<span class="sd">            transfer_type</span>
+
+<span class="sd">            * (file_size, md5_hash) in the case of a file transfer</span>
+<span class="sd">            * (cumulated_size, dictionary relative path -&gt; (file_size,</span>
+<span class="sd">              md5_hash)) in case of a directory transfer.</span>
+
+<span class="sd">        Raises *UnknownObjectError* if the transfer_id is not valid</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="p">(</span><span class="n">transfer_id</span><span class="p">,</span>
+         <span class="n">engine_path</span><span class="p">,</span>
+         <span class="n">client_path</span><span class="p">,</span>
+         <span class="n">expiration_date</span><span class="p">,</span>
+         <span class="n">workflow_id</span><span class="p">,</span>
+         <span class="n">client_paths</span><span class="p">,</span>
+         <span class="n">transfer_type</span><span class="p">,</span>
+         <span class="n">status</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">transfer_information</span><span class="p">(</span><span class="n">transfer_id</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="n">constants</span><span class="o">.</span><span class="n">FILES_ON_CLIENT</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">client_paths</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">client_path</span><span class="p">):</span>
+                    <span class="n">transfer_type</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">TR_FILE_C_TO_CR</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">set_transfer_status</span><span class="p">(</span>
+                        <span class="n">transfer_id</span><span class="p">,</span> <span class="n">constants</span><span class="o">.</span><span class="n">TRANSFERING_FROM_CLIENT_TO_CR</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">set_transfer_type</span><span class="p">(</span><span class="n">transfer_id</span><span class="p">,</span>
+                                                         <span class="n">transfer_type</span><span class="p">)</span>
+
+                <span class="k">elif</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">client_path</span><span class="p">):</span>
+                    <span class="n">transfer_type</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">TR_DIR_C_TO_CR</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">set_transfer_status</span><span class="p">(</span>
+                        <span class="n">transfer_id</span><span class="p">,</span> <span class="n">constants</span><span class="o">.</span><span class="n">TRANSFERING_FROM_CLIENT_TO_CR</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">set_transfer_type</span><span class="p">(</span>
+                        <span class="n">transfer_id</span><span class="p">,</span> <span class="n">constants</span><span class="o">.</span><span class="n">TR_DIR_C_TO_CR</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;WARNING: The file or directory </span><span class="si">%s</span><span class="s2"> doesn&#39;t exist &quot;</span>
+                          <span class="s2">&quot;on the client machine.&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">client_path</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>  <span class="c1"># client_paths</span>
+                <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">client_paths</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;WARNING: The file or directory </span><span class="si">%s</span><span class="s2"> doesn&#39;t &quot;</span>
+                              <span class="s2">&quot;exist on the client machine.&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">path</span><span class="p">))</span>
+                <span class="n">transfer_type</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">TR_MFF_C_TO_CR</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">set_transfer_status</span><span class="p">(</span>
+                <span class="n">transfer_id</span><span class="p">,</span> <span class="n">constants</span><span class="o">.</span><span class="n">TRANSFERING_FROM_CLIENT_TO_CR</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">set_transfer_type</span><span class="p">(</span><span class="n">transfer_id</span><span class="p">,</span>
+                                                 <span class="n">transfer_type</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">transfer_type</span>
+
+        <span class="k">elif</span> <span class="n">status</span> <span class="o">==</span> <span class="n">constants</span><span class="o">.</span><span class="n">FILES_ON_CR</span> \
+                <span class="ow">or</span> <span class="n">status</span> <span class="o">==</span> <span class="n">constants</span><span class="o">.</span><span class="n">FILES_ON_CLIENT_AND_CR</span><span class="p">:</span>
+            <span class="c1"># transfer_type = self._engine_proxy.init_transfer_from_cr(transfer_id,</span>
+                                                   <span class="c1"># client_path,</span>
+                                                   <span class="c1"># expiration_date,</span>
+                                                   <span class="c1"># workflow_id,</span>
+                                                   <span class="c1"># client_paths,</span>
+                                                   <span class="c1"># status)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">client_paths</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">is_file</span><span class="p">(</span><span class="n">engine_path</span><span class="p">):</span>
+                    <span class="n">transfer_type</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">TR_FILE_CR_TO_C</span>
+                <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">is_dir</span><span class="p">(</span><span class="n">engine_path</span><span class="p">):</span>
+                    <span class="n">transfer_type</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">TR_DIR_CR_TO_C</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;WARNING: The file or directory </span><span class="si">%s</span><span class="s2"> doesn&#39;t exist &quot;</span>
+                          <span class="s2">&quot;on the computing resource side.&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">engine_path</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>  <span class="c1"># client_paths</span>
+                <span class="n">engine_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">engine_path</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">client_paths</span><span class="p">:</span>
+                    <span class="n">relative_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+                    <span class="n">r_path</span> <span class="o">=</span> <span class="n">posixpath</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">engine_dir</span><span class="p">,</span> <span class="n">relative_path</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">is_file</span><span class="p">(</span><span class="n">r_path</span><span class="p">)</span> <span class="ow">and</span> \
+                       <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">is_dir</span><span class="p">(</span><span class="n">r_path</span><span class="p">):</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;WARNING: The file or directory </span><span class="si">%s</span><span class="s2"> doesn&#39;t &quot;</span>
+                              <span class="s2">&quot;exist on the computing resource side.&quot;</span>
+                              <span class="o">%</span> <span class="p">(</span><span class="n">r_path</span><span class="p">))</span>
+                <span class="n">transfer_type</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">TR_MFF_CR_TO_C</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">set_transfer_status</span><span class="p">(</span>
+                <span class="n">transfer_id</span><span class="p">,</span> <span class="n">constants</span><span class="o">.</span><span class="n">TRANSFERING_FROM_CR_TO_CLIENT</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">set_transfer_type</span><span class="p">(</span><span class="n">transfer_id</span><span class="p">,</span>
+                                                 <span class="n">transfer_type</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">transfer_type</span>
+
+    <span class="k">def</span> <span class="nf">_transfer_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transfer_id</span><span class="p">,</span> <span class="n">buffer_size</span><span class="p">):</span>
+
+        <span class="p">(</span><span class="n">transfer_id</span><span class="p">,</span>
+         <span class="n">engine_path</span><span class="p">,</span>
+         <span class="n">client_path</span><span class="p">,</span>
+         <span class="n">expiration_date</span><span class="p">,</span>
+         <span class="n">workflow_id</span><span class="p">,</span>
+         <span class="n">client_paths</span><span class="p">,</span>
+         <span class="n">transfer_type</span><span class="p">,</span>
+         <span class="n">status</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">transfer_information</span><span class="p">(</span><span class="n">transfer_id</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="n">constants</span><span class="o">.</span><span class="n">FILES_ON_CLIENT</span> <span class="ow">or</span> \
+           <span class="n">status</span> <span class="o">==</span> <span class="n">constants</span><span class="o">.</span><span class="n">TRANSFERING_FROM_CLIENT_TO_CR</span><span class="p">:</span>
+            <span class="c1"># transfer from client to computing resource</span>
+            <span class="c1"># overwrite = False</span>
+            <span class="c1"># if not transfer_type or \</span>
+             <span class="c1"># transfer_type == constants.TR_FILE_CR_TO_C or \</span>
+             <span class="c1"># transfer_type == constants.TR_DIR_CR_TO_C or \</span>
+             <span class="c1"># transfer_type == constants.TR_MFF_CR_TO_C:</span>
+                <span class="c1"># transfer reset</span>
+                <span class="c1"># overwrite = True</span>
+            <span class="n">transfer_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_transfer</span><span class="p">(</span><span class="n">transfer_id</span><span class="p">)</span>
+
+            <span class="n">remote_path</span> <span class="o">=</span> <span class="n">engine_path</span>
+
+            <span class="k">if</span> <span class="n">transfer_type</span> <span class="o">==</span> <span class="n">constants</span><span class="o">.</span><span class="n">TR_FILE_C_TO_CR</span> <span class="ow">or</span> \
+               <span class="n">transfer_type</span> <span class="o">==</span> <span class="n">constants</span><span class="o">.</span><span class="n">TR_DIR_C_TO_CR</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_transfer</span><span class="o">.</span><span class="n">transfer_to_remote</span><span class="p">(</span><span class="n">client_path</span><span class="p">,</span>
+                                                  <span class="n">remote_path</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">set_transfer_status</span><span class="p">(</span>
+                    <span class="n">transfer_id</span><span class="p">,</span> <span class="n">constants</span><span class="o">.</span><span class="n">FILES_ON_CLIENT_AND_CR</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">signalTransferEnded</span><span class="p">(</span>
+                    <span class="n">transfer_id</span><span class="p">,</span> <span class="n">workflow_id</span><span class="p">)</span>
+                <span class="k">return</span> <span class="kc">True</span>
+
+            <span class="k">if</span> <span class="n">transfer_type</span> <span class="o">==</span> <span class="n">constants</span><span class="o">.</span><span class="n">TR_MFF_C_TO_CR</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">client_paths</span><span class="p">:</span>
+                    <span class="n">relative_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+                    <span class="n">r_path</span> <span class="o">=</span> <span class="n">posixpath</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">remote_path</span><span class="p">,</span> <span class="n">relative_path</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_transfer</span><span class="o">.</span><span class="n">transfer_to_remote</span><span class="p">(</span><span class="n">path</span><span class="p">,</span>
+                                                      <span class="n">r_path</span><span class="p">)</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">set_transfer_status</span><span class="p">(</span>
+                    <span class="n">transfer_id</span><span class="p">,</span> <span class="n">constants</span><span class="o">.</span><span class="n">FILES_ON_CLIENT_AND_CR</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">signalTransferEnded</span><span class="p">(</span>
+                    <span class="n">transfer_id</span><span class="p">,</span> <span class="n">workflow_id</span><span class="p">)</span>
+                <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="n">constants</span><span class="o">.</span><span class="n">FILES_ON_CR</span> <span class="ow">or</span> \
+           <span class="n">status</span> <span class="o">==</span> <span class="n">constants</span><span class="o">.</span><span class="n">TRANSFERING_FROM_CR_TO_CLIENT</span> <span class="ow">or</span> \
+           <span class="n">status</span> <span class="o">==</span> <span class="n">constants</span><span class="o">.</span><span class="n">FILES_ON_CLIENT_AND_CR</span><span class="p">:</span>
+            <span class="c1"># transfer from computing resource to client</span>
+            <span class="c1"># overwrite = False</span>
+            <span class="c1"># if not transfer_type or \</span>
+             <span class="c1"># transfer_type == constants.TR_FILE_C_TO_CR or \</span>
+             <span class="c1"># transfer_type == constants.TR_DIR_C_TO_CR or \</span>
+             <span class="c1"># transfer_type == constants.TR_MFF_C_TO_CR :</span>
+                <span class="c1"># TBI remove existing files</span>
+                <span class="c1"># overwrite = True</span>
+            <span class="n">transfer_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_transfer</span><span class="p">(</span><span class="n">transfer_id</span><span class="p">)</span>
+
+            <span class="n">remote_path</span> <span class="o">=</span> <span class="n">engine_path</span>
+            <span class="k">if</span> <span class="n">transfer_type</span> <span class="o">==</span> <span class="n">constants</span><span class="o">.</span><span class="n">TR_FILE_CR_TO_C</span> <span class="ow">or</span> \
+               <span class="n">transfer_type</span> <span class="o">==</span> <span class="n">constants</span><span class="o">.</span><span class="n">TR_DIR_CR_TO_C</span><span class="p">:</span>
+                <span class="c1"># file case</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_transfer</span><span class="o">.</span><span class="n">transfer_from_remote</span><span class="p">(</span><span class="n">remote_path</span><span class="p">,</span>
+                                                    <span class="n">client_path</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">set_transfer_status</span><span class="p">(</span>
+                    <span class="n">transfer_id</span><span class="p">,</span> <span class="n">constants</span><span class="o">.</span><span class="n">FILES_ON_CLIENT_AND_CR</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">signalTransferEnded</span><span class="p">(</span>
+                    <span class="n">transfer_id</span><span class="p">,</span> <span class="n">workflow_id</span><span class="p">)</span>
+                <span class="k">return</span> <span class="kc">True</span>
+
+            <span class="k">if</span> <span class="n">transfer_type</span> <span class="o">==</span> <span class="n">constants</span><span class="o">.</span><span class="n">TR_MFF_CR_TO_C</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">client_paths</span><span class="p">:</span>
+                    <span class="n">relative_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+                    <span class="n">r_path</span> <span class="o">=</span> <span class="n">posixpath</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">remote_path</span><span class="p">,</span> <span class="n">relative_path</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_transfer</span><span class="o">.</span><span class="n">transfer_from_remote</span><span class="p">(</span><span class="n">r_path</span><span class="p">,</span>
+                                                        <span class="n">path</span><span class="p">)</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">set_transfer_status</span><span class="p">(</span>
+                    <span class="n">transfer_id</span><span class="p">,</span> <span class="n">constants</span><span class="o">.</span><span class="n">FILES_ON_CLIENT_AND_CR</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_engine_proxy</span><span class="o">.</span><span class="n">signalTransferEnded</span><span class="p">(</span>
+                    <span class="n">transfer_id</span><span class="p">,</span> <span class="n">workflow_id</span><span class="p">)</span>
+                <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">_transfer_progression</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                              <span class="n">status</span><span class="p">,</span>
+                              <span class="n">transfer_type</span><span class="p">,</span>
+                              <span class="n">client_path</span><span class="p">,</span>
+                              <span class="n">client_paths</span><span class="p">,</span>
+                              <span class="n">engine_path</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="n">constants</span><span class="o">.</span><span class="n">TRANSFERING_FROM_CLIENT_TO_CR</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">transfer_type</span> <span class="o">==</span> <span class="n">constants</span><span class="o">.</span><span class="n">TR_MFF_C_TO_CR</span><span class="p">:</span>
+                <span class="n">data_size</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">data_transfered</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">client_paths</span><span class="p">:</span>
+                    <span class="n">relative_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+                    <span class="n">r_path</span> <span class="o">=</span> <span class="n">posixpath</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">engine_path</span><span class="p">,</span> <span class="n">relative_path</span><span class="p">)</span>
+                    <span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">dt</span><span class="p">)</span> \
+                        <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transfer_monitoring</span><span class="o">.</span><span class="n">transfer_to_remote_progression</span><span class="p">(</span>
+                            <span class="n">path</span><span class="p">,</span> <span class="n">r_path</span><span class="p">)</span>
+                    <span class="n">data_size</span> <span class="o">=</span> <span class="n">data_size</span> <span class="o">+</span> <span class="n">ds</span>
+                    <span class="n">data_transfered</span> <span class="o">=</span> <span class="n">data_transfered</span> <span class="o">+</span> <span class="n">dt</span>
+                <span class="n">progression</span> <span class="o">=</span> <span class="p">(</span><span class="n">data_size</span><span class="p">,</span> <span class="n">data_transfered</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">progression</span> \
+                    <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transfer_monitoring</span><span class="o">.</span><span class="n">transfer_to_remote_progression</span><span class="p">(</span>
+                        <span class="n">client_path</span><span class="p">,</span> <span class="n">engine_path</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">status</span> <span class="o">==</span> <span class="n">constants</span><span class="o">.</span><span class="n">TRANSFERING_FROM_CR_TO_CLIENT</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">transfer_type</span> <span class="o">==</span> <span class="n">constants</span><span class="o">.</span><span class="n">TR_MFF_CR_TO_C</span><span class="p">:</span>
+                <span class="n">data_size</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">data_transfered</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">client_paths</span><span class="p">:</span>
+                    <span class="n">relative_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+                    <span class="n">r_path</span> <span class="o">=</span> <span class="n">posixpath</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">engine_path</span><span class="p">,</span> <span class="n">relative_path</span><span class="p">)</span>
+                    <span class="p">(</span><span class="n">ds</span><span class="p">,</span>
+                     <span class="n">dt</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transfer_monitoring</span><span class="o">.</span><span class="n">transfer_from_remote_progression</span><span class="p">(</span><span class="n">r_path</span><span class="p">,</span>
+                                                                                      <span class="n">path</span><span class="p">)</span>
+                    <span class="n">data_size</span> <span class="o">=</span> <span class="n">data_size</span> <span class="o">+</span> <span class="n">ds</span>
+                    <span class="n">data_transfered</span> <span class="o">=</span> <span class="n">data_transfered</span> <span class="o">+</span> <span class="n">dt</span>
+                <span class="n">progression</span> <span class="o">=</span> <span class="p">(</span><span class="n">data_size</span><span class="p">,</span> <span class="n">data_transfered</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">progression</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transfer_monitoring</span><span class="o">.</span><span class="n">transfer_from_remote_progression</span><span class="p">(</span>
+                    <span class="n">engine_path</span><span class="p">,</span>
+                    <span class="n">client_path</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">progression</span> <span class="o">=</span> <span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">progression</span></div>
+
+
+<span class="k">def</span> <span class="nf">_embedded_engine_and_server</span><span class="p">(</span><span class="n">config</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Creates the workflow engine and workflow database server in the client</span>
+<span class="sd">    process.</span>
+<span class="sd">    The client process can not finish before the workflows and jobs are done.</span>
+<span class="sd">    Using serveral client process simultaneously (thus several database server</span>
+<span class="sd">    with the same database file) can cause error (notably database locked</span>
+<span class="sd">    problems)</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    config: configuration.Configuration</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    engine: WorkflowEngine</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="kn">import</span> <span class="nn">logging</span>
+
+    <span class="kn">from</span> <span class="nn">soma_workflow.engine</span> <span class="kn">import</span> <span class="n">WorkflowEngine</span><span class="p">,</span> <span class="n">ConfiguredWorkflowEngine</span>
+    <span class="kn">from</span> <span class="nn">soma_workflow.database_server</span> <span class="kn">import</span> <span class="n">WorkflowDatabaseServer</span>
+
+    <span class="c1"># configure logging</span>
+    <span class="n">log_config</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;version&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+
+    <span class="p">(</span><span class="n">engine_log_dir</span><span class="p">,</span>
+     <span class="n">engine_log_format</span><span class="p">,</span>
+     <span class="n">engine_log_level</span><span class="p">)</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get_engine_log_info</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">engine_log_dir</span><span class="p">:</span>
+        <span class="n">logfilepath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">engine_log_dir</span><span class="p">),</span> <span class="s2">&quot;log_light_mode&quot;</span><span class="p">)</span>
+        <span class="n">log_config</span><span class="p">[</span><span class="s1">&#39;loggers&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;engine&#39;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s1">&#39;level&#39;</span><span class="p">:</span> <span class="nb">eval</span><span class="p">(</span><span class="s2">&quot;logging.&quot;</span> <span class="o">+</span> <span class="n">engine_log_level</span><span class="p">),</span>
+                <span class="s1">&#39;handlers&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;engine&#39;</span><span class="p">],</span>
+                <span class="s1">&#39;propagate&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="n">log_config</span><span class="p">[</span><span class="s1">&#39;handlers&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;engine&#39;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s1">&#39;class&#39;</span><span class="p">:</span> <span class="s1">&#39;logging.FileHandler&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;filename&#39;</span><span class="p">:</span> <span class="n">logfilepath</span><span class="p">,</span>
+                <span class="s1">&#39;level&#39;</span><span class="p">:</span> <span class="nb">eval</span><span class="p">(</span><span class="s2">&quot;logging.&quot;</span> <span class="o">+</span> <span class="n">engine_log_level</span><span class="p">),</span>
+                <span class="s1">&#39;formatter&#39;</span><span class="p">:</span> <span class="s1">&#39;engine&#39;</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="n">log_config</span><span class="p">[</span><span class="s1">&#39;formatters&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;engine&#39;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s1">&#39;format&#39;</span><span class="p">:</span> <span class="n">engine_log_format</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+    <span class="p">(</span><span class="n">server_log_file</span><span class="p">,</span>
+     <span class="n">server_log_format</span><span class="p">,</span>
+     <span class="n">server_log_level</span><span class="p">)</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get_server_log_info</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">server_log_file</span><span class="p">:</span>
+        <span class="n">log_config</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;loggers&#39;</span><span class="p">,</span> <span class="p">{})[</span><span class="s1">&#39;jobServer&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;level&#39;</span><span class="p">:</span> <span class="nb">eval</span><span class="p">(</span><span class="s2">&quot;logging.&quot;</span> <span class="o">+</span> <span class="n">server_log_level</span><span class="p">),</span>
+            <span class="s1">&#39;handlers&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;jobServer&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;propagate&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="n">log_config</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;handlers&#39;</span><span class="p">,</span> <span class="p">{})[</span><span class="s1">&#39;jobServer&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;class&#39;</span><span class="p">:</span> <span class="s1">&#39;logging.FileHandler&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;filename&#39;</span><span class="p">:</span> <span class="n">server_log_file</span><span class="p">,</span>
+            <span class="s1">&#39;level&#39;</span><span class="p">:</span> <span class="nb">eval</span><span class="p">(</span><span class="s2">&quot;logging.&quot;</span> <span class="o">+</span> <span class="n">server_log_level</span><span class="p">),</span>
+            <span class="s1">&#39;formatter&#39;</span><span class="p">:</span> <span class="s1">&#39;jobServer&#39;</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="n">log_config</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;formatters&#39;</span><span class="p">,</span> <span class="p">{})[</span><span class="s1">&#39;jobServer&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;format&#39;</span><span class="p">:</span> <span class="n">server_log_format</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">server_log_file</span><span class="p">)):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">server_log_file</span><span class="p">))</span>
+
+    <span class="kn">import</span> <span class="nn">logging.config</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">dictConfig</span><span class="p">(</span><span class="n">log_config</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">engine_log_dir</span><span class="p">:</span>
+        <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;engine&#39;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;****************************************************&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;****************************************************&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">server_log_file</span><span class="p">:</span>
+        <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;jobServer&#39;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;****************************************************&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;****************************************************&quot;</span><span class="p">)</span>
+
+    <span class="c1"># database server</span>
+    <span class="n">database_server</span> <span class="o">=</span> <span class="n">WorkflowDatabaseServer</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">get_database_file</span><span class="p">(),</span>
+                                             <span class="n">config</span><span class="o">.</span><span class="n">get_transfered_file_dir</span><span class="p">(),</span>
+                                             <span class="n">remove_orphan_files</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">get_remove_orphan_files</span><span class="p">())</span>
+
+    <span class="n">sch</span> <span class="o">=</span> <span class="n">scheduler</span><span class="o">.</span><span class="n">build_scheduler</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">get_scheduler_type</span><span class="p">(),</span> <span class="n">config</span><span class="p">)</span>
+    <span class="n">workflow_engine</span> <span class="o">=</span> <span class="n">ConfiguredWorkflowEngine</span><span class="p">(</span><span class="n">database_server</span><span class="p">,</span>
+                                               <span class="n">sch</span><span class="p">,</span>
+                                               <span class="n">config</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">workflow_engine</span>
+
+
+<span class="k">class</span> <span class="nc">Helper</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+<div class="viewcode-block" id="Helper.list_failed_jobs"><a class="viewcode-back" href="../client_API.html#client.Helper.list_failed_jobs">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">list_failed_jobs</span><span class="p">(</span><span class="n">workflow_id</span><span class="p">,</span>
+                         <span class="n">wf_ctrl</span><span class="p">,</span>
+                         <span class="n">include_aborted_jobs</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                         <span class="n">include_user_killed_jobs</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                         <span class="n">include_statuses</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        To spot the problematic jobs in a workflow.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        workflow_id: workflow identifier</span>
+
+<span class="sd">        include_aborted_jobs: bool</span>
+<span class="sd">            Include the jobs which exit status is constants.EXIT_ABORTED</span>
+<span class="sd">            and constants.EXIT_NOTRUN</span>
+<span class="sd">        include_user_killed_jobs: bool</span>
+<span class="sd">            Include the jobs which exit status is constants.USER_KILLED</span>
+<span class="sd">        include_statuses: sequence or None</span>
+<span class="sd">            Get failed jobs with exit status in this list/set. Ignore</span>
+<span class="sd">            ``include_aborted_jobs`` and ``include_user_killed_jobs``</span>
+<span class="sd">            parameters.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        jobs: list of job identifier</span>
+<span class="sd">            Returns the list of id of job which status is constants.FAILED</span>
+<span class="sd">            or which exit value is not 0.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="p">(</span><span class="n">jobs_info</span><span class="p">,</span>
+         <span class="n">transfers_info</span><span class="p">,</span>
+         <span class="n">workflow_status</span><span class="p">,</span>
+         <span class="n">workflow_queue</span><span class="p">,</span>
+         <span class="n">transfers_temp_info</span><span class="p">)</span> <span class="o">=</span> <span class="n">wf_ctrl</span><span class="o">.</span><span class="n">workflow_elements_status</span><span class="p">(</span>
+            <span class="n">workflow_id</span><span class="p">,</span> <span class="n">with_drms_id</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">failed_job_ids</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">include_statuses</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">include_statuses</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">constants</span><span class="o">.</span><span class="n">JOB_EXIT_STATUS</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">include_user_killed_jobs</span><span class="p">:</span>
+                <span class="n">include_statuses</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">constants</span><span class="o">.</span><span class="n">USER_KILLED</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">include_aborted_jobs</span><span class="p">:</span>
+                <span class="n">include_statuses</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">constants</span><span class="o">.</span><span class="n">EXIT_ABORTED</span><span class="p">)</span>
+                <span class="n">include_statuses</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">constants</span><span class="o">.</span><span class="n">EXIT_NOTRUN</span><span class="p">)</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">job_id</span><span class="p">,</span> <span class="n">status</span><span class="p">,</span> <span class="n">queue</span><span class="p">,</span> <span class="n">exit_info</span><span class="p">,</span> <span class="n">dates</span><span class="p">,</span> <span class="n">drmaa_id</span><span class="p">)</span> <span class="ow">in</span> <span class="n">jobs_info</span><span class="p">:</span>
+            <span class="k">if</span><span class="p">(</span><span class="n">status</span> <span class="o">==</span> <span class="n">constants</span><span class="o">.</span><span class="n">DONE</span> <span class="ow">and</span> <span class="n">exit_info</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> \
+                    <span class="p">(</span><span class="n">status</span> <span class="o">==</span> <span class="n">constants</span><span class="o">.</span><span class="n">FAILED</span> <span class="ow">and</span>
+                     <span class="n">exit_info</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">include_statuses</span><span class="p">):</span>
+                <span class="n">failed_job_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">failed_job_ids</span></div>
+
+<div class="viewcode-block" id="Helper.delete_all_workflows"><a class="viewcode-back" href="../client_API.html#client.Helper.delete_all_workflows">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">delete_all_workflows</span><span class="p">(</span><span class="n">wf_ctrl</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Delete all the workflows.</span>
+<span class="sd">        If force is set to True: the call will block until the workflows are</span>
+<span class="sd">        deleted. With force set to True, if a workflow can not be deleted</span>
+<span class="sd">        properly it is deleted from Soma-workflow database. However, if some</span>
+<span class="sd">        jobs are still running they will not be killed. In this case the return</span>
+<span class="sd">        value is False.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        wf_ctrl: client.WorkflowController</span>
+
+<span class="sd">        force: bool</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        success: bool</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">deleted_properly</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">while</span> <span class="n">wf_ctrl</span><span class="o">.</span><span class="n">workflows</span><span class="p">():</span>
+            <span class="n">wf_id</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">wf_ctrl</span><span class="o">.</span><span class="n">workflows</span><span class="p">()</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+            <span class="n">deleted_properly</span> <span class="o">=</span> <span class="n">deleted_properly</span> <span class="ow">and</span> <span class="n">wf_ctrl</span><span class="o">.</span><span class="n">delete_workflow</span><span class="p">(</span>
+                <span class="n">wf_id</span><span class="p">,</span> <span class="n">force</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">deleted_properly</span></div>
+
+<div class="viewcode-block" id="Helper.wait_workflow"><a class="viewcode-back" href="../client_API.html#client.Helper.wait_workflow">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">wait_workflow</span><span class="p">(</span><span class="n">workflow_id</span><span class="p">,</span>
+                      <span class="n">wf_ctrl</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Waits for workflow execution to end.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        workflow_id: workflow identifier</span>
+
+<span class="sd">        wf_ctrl: client.WorkflowController</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">wf_ctrl</span><span class="o">.</span><span class="n">wait_workflow</span><span class="p">(</span><span class="n">workflow_id</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Helper.transfer_input_files"><a class="viewcode-back" href="../client_API.html#client.Helper.transfer_input_files">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">transfer_input_files</span><span class="p">(</span><span class="n">workflow_id</span><span class="p">,</span>
+                             <span class="n">wf_ctrl</span><span class="p">,</span>
+                             <span class="n">buffer_size</span><span class="o">=</span><span class="mi">512</span> <span class="o">**</span> <span class="mi">2</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Transfers all the input files of a workflow.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        workflow_id: workflow identifier</span>
+
+<span class="sd">        wf_ctrl: client.WorkflowController</span>
+
+<span class="sd">        buffer_size: int</span>
+<span class="sd">            Depending on the transfer method, the files can be transfered piece</span>
+<span class="sd">            by piece. The size of each piece can be tuned using the buffer_size</span>
+<span class="sd">            argument.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">transfer_info</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">wf_elements_status</span> <span class="o">=</span> <span class="n">wf_ctrl</span><span class="o">.</span><span class="n">workflow_elements_status</span><span class="p">(</span><span class="n">workflow_id</span><span class="p">)</span>
+
+        <span class="n">to_transfer</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">transfer_info</span> <span class="ow">in</span> <span class="n">wf_elements_status</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="n">status</span> <span class="o">=</span> <span class="n">transfer_info</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="n">constants</span><span class="o">.</span><span class="n">FILES_ON_CLIENT</span><span class="p">:</span>
+                <span class="n">engine_path</span> <span class="o">=</span> <span class="n">transfer_info</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">to_transfer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">engine_path</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="n">constants</span><span class="o">.</span><span class="n">TRANSFERING_FROM_CLIENT_TO_CR</span><span class="p">:</span>
+                <span class="n">engine_path</span> <span class="o">=</span> <span class="n">transfer_info</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">to_transfer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">engine_path</span><span class="p">)</span>
+
+        <span class="n">wf_ctrl</span><span class="o">.</span><span class="n">transfer_files</span><span class="p">(</span><span class="n">to_transfer</span><span class="p">,</span> <span class="n">buffer_size</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Helper.transfer_output_files"><a class="viewcode-back" href="../client_API.html#client.Helper.transfer_output_files">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">transfer_output_files</span><span class="p">(</span><span class="n">workflow_id</span><span class="p">,</span>
+                              <span class="n">wf_ctrl</span><span class="p">,</span>
+                              <span class="n">buffer_size</span><span class="o">=</span><span class="mi">512</span> <span class="o">**</span> <span class="mi">2</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Transfers all the output files of a workflow which are ready to</span>
+<span class="sd">        transfer.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        workflow_id: workflow identifier</span>
+
+<span class="sd">        wf_ctrl: client.WorkflowController</span>
+
+<span class="sd">        buffer_size: int</span>
+<span class="sd">            Depending on the transfer method, the files can be transfered piece</span>
+<span class="sd">            by piece. The size of each piece can be tuned using the buffer_size</span>
+<span class="sd">            argument.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">transfer_info</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">wf_elements_status</span> <span class="o">=</span> <span class="n">wf_ctrl</span><span class="o">.</span><span class="n">workflow_elements_status</span><span class="p">(</span><span class="n">workflow_id</span><span class="p">)</span>
+
+        <span class="n">to_transfer</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">transfer_info</span> <span class="ow">in</span> <span class="n">wf_elements_status</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="n">status</span> <span class="o">=</span> <span class="n">transfer_info</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="n">constants</span><span class="o">.</span><span class="n">FILES_ON_CR</span><span class="p">:</span>
+                <span class="n">engine_path</span> <span class="o">=</span> <span class="n">transfer_info</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">to_transfer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">engine_path</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="n">constants</span><span class="o">.</span><span class="n">TRANSFERING_FROM_CR_TO_CLIENT</span><span class="p">:</span>
+                <span class="n">engine_path</span> <span class="o">=</span> <span class="n">transfer_info</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">to_transfer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">engine_path</span><span class="p">))</span>
+        <span class="n">wf_ctrl</span><span class="o">.</span><span class="n">transfer_files</span><span class="p">(</span><span class="n">to_transfer</span><span class="p">,</span> <span class="n">buffer_size</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Helper.serialize"><a class="viewcode-back" href="../client_API.html#client.Helper.serialize">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">serialize</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">workflow</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Saves a workflow to a file.</span>
+<span class="sd">        Uses JSON format.</span>
+
+<span class="sd">        Raises *SerializationError* in case of failure</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        file_path: str</span>
+
+<span class="sd">        workflow: client.Workflow</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">soma_workflow</span> <span class="kn">import</span> <span class="n">utils</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span>
+            <span class="n">workflow_dict</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">to_json</span><span class="p">(</span><span class="n">workflow_dict</span><span class="p">),</span> <span class="n">file</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+            <span class="n">file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">six</span><span class="o">.</span><span class="n">reraise</span><span class="p">(</span><span class="n">SerializationError</span><span class="p">,</span>
+                        <span class="n">SerializationError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">),</span> <span class="n">e</span><span class="p">)),</span>
+                        <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()[</span><span class="mi">2</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="Helper.unserialize"><a class="viewcode-back" href="../client_API.html#client.Helper.unserialize">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">unserialize</span><span class="p">(</span><span class="n">file_path</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Loads a workflow from a file.</span>
+<span class="sd">        Opens JSON format or pickle (see the method:</span>
+<span class="sd">        Helper.convert_wf_file_for_p2_5).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        file_path: str</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        workflow: client.Workflow</span>
+
+<span class="sd">        Raises *SerializationError* in case of failure</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="kn">from</span> <span class="nn">soma_workflow</span> <span class="kn">import</span> <span class="n">utils</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SerializationError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">),</span> <span class="n">e</span><span class="p">))</span>
+
+        <span class="n">workflow</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">dict_from_json</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">file</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">workflow</span> <span class="o">=</span> <span class="n">Workflow</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">dict_from_json</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">workflow</span><span class="p">:</span>
+            <span class="n">file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="n">file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">workflow</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">SerializationError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">),</span> <span class="n">e</span><span class="p">))</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SerializationError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">),</span> <span class="n">e</span><span class="p">))</span>
+
+        <span class="c1"># compatibility with version 2.2 and previous</span>
+        <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">workflow</span><span class="o">.</span><span class="n">jobs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">job</span><span class="p">,</span> <span class="s2">&quot;native_specification&quot;</span><span class="p">):</span>
+                <span class="n">job</span><span class="o">.</span><span class="n">native_specification</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">return</span> <span class="n">workflow</span></div>
+
+<div class="viewcode-block" id="Helper.convert_wf_file_for_p2_5"><a class="viewcode-back" href="../client_API.html#client.Helper.convert_wf_file_for_p2_5">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">convert_wf_file_for_p2_5</span><span class="p">(</span><span class="n">origin_file_path</span><span class="p">,</span> <span class="n">target_file_path</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        This method requires Python &gt;= 2.6.</span>
+<span class="sd">        It converts a workflow file created using Python &gt;= 2.6 to workflow</span>
+<span class="sd">        file usable in Python 2.5.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">soma_workflow</span> <span class="kn">import</span> <span class="n">utils</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">o_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">origin_file_path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span>
+            <span class="n">dict_from_json</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">o_file</span><span class="p">))</span>
+            <span class="n">workflow</span> <span class="o">=</span> <span class="n">Workflow</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">dict_from_json</span><span class="p">)</span>
+            <span class="n">o_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="n">t_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">target_file_path</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span>
+            <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">workflow</span><span class="p">,</span> <span class="n">t_file</span><span class="p">)</span>
+            <span class="n">t_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">SerializationError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">),</span> <span class="n">e</span><span class="p">))</span></div>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">cpu_count</span><span class="p">():</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Detects the number of CPUs on a system.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">configuration</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/logo_white_small.png" alt="Logo"/>
+            </a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">soma-workflow version 3.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">client</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2011-2021 CEA, Neurospin, France, CATI, France.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

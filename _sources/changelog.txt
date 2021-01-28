@@ -1,0 +1,195 @@
+=========
+Changelog
+=========
+
+Version 3.1 (2019/11/15)
+========================
+
+* the communication protocol in client / server mode (now based on ZMQ since 3.0) has been modified to handle multi-threaded, asynchronous requests, and avoid deadlocks. Disconnections are detected at several places and both client and server stopped when this occurs.
+* workflows can get an "env" variable, like jobs do, and will apply their environment to all jobs
+* workflows can get an "env_builder_code" variable, which contains python source code which will be executed to build additional environment variables on the engine side when the workflow is submitted. This allows to handle client/server configurations, and partially some dynamic workflow tuning.
+* jobs env has been fixed in the local scheduler: it used to completely replace the env variables, now it just adds the new ones to the standard user variables.
+* Dynamic parameters in workflows: jobs can now have "named parameters" and outputs produced by a job (number, string, filename) are passed to downstream jobs. While passing values from a job output to another job input, custom link functions can be called to transform values, enabling applications such as map/reduce, cross-validation or leave-one-out in a semi-dynamic way.
+* some bug fixes especially in the PBSpro scheduler using python3
+
+
+Version 3.0 (2019/02/04)
+========================
+
+* Pyro is gone, Soma-Workflow is now using `ZMQ <http://zeromq.org/>`_ and `PyZmq <https://pyzmq.readthedocs.io/en/latest/>`_.
+
+  As a consequence, all the client/server communication layer has been made completely incompatible with soma-workflow 2.10 and earlier. Client and server should always be the same version anyway. The client/server API has not changed fundamentally however.
+
+* Porting to Python3: Pyro3 having been dropped, all the requirements for porting to Python3 have now been met, and Soma-Workflow can entirely wotk using Python3. However it is not possible to run different versions of Python on the client and the server: read :doc:`changes_swf3` for details.
+
+* New PBSPro scheduler type, to be used when DRMAA is not available, or doesn't work (like on our new cluster): use ``scheduler_type = pbspro`` in the server config file. It might also work on PBS/Torque, we have not tried yet.
+
+* It is now possible to restart a workflow which is still running: running / pending jobs will go on, and only failed jobs will be restarted.
+
+* A few improvements, such as the 2 new plots modes in the GUI (soma_workflow_gui) displaying the use of CPUs in addition to jobs (useful for parallel jobs)
+
+
+Version 2.11 (2019/06/05)
+=========================
+
+bug fixes
+
+Version 2.10 (2019/02/04)
+=========================
+
+* In Soma-Workflow 2.10, the **"server management" options** have finally been fixed (they have basically never been working earlier). It is now possible to completely install soma-workflow on a remote server and configure it (in a basic way) from the GUI of a client. Only Python is required to be installed on server side, and DRMAA if the server is a cluster using a DRMS.
+
+* Soma-Workflow allows a new server config option, :ref:`CONTAINER_COMMAND <container_command>`, which allows to **run jobs through a container** (typically `Docker <https://www.docker.com/>`_ or `Singularity <https://www.sylabs.io/singularity/>`_)
+
+
+Version 2.9 (sept. 2017)
+========================
+
+* Performance optimization
+
+  Some optimization has been done, especially in database queries which have been largely reduced, in jobs dependencies scanning, and in workflow submission (a lot of time was used to create empty stdout/stderr files which were not needed right now). As a consequence the load of jobs management is somewhat ligher, and submitting large workflows is way faster. This also prevents spurious timeouts when the server was too loaded.
+
+* command added: ``soma_kill_servers``, kills a computing resource servers and optionally clears its database, from the client. Convenient if something went wrong on server side, or if you have upgraded soma-workflow version.
+
+* Porting to Python 3, except the client/server communication which relies on Pyro3, and Pyro3 has not been ported to python 3.
+
+* Compatibility with PyQt4, PyQt5, PySide.
+
+* Important bugs fixed, especially some which could cause deadlocks in the engine.
+
+
+Version 2.8 (Feb. 2016)
+=======================
+
+* More precise job status:
+
+  Differentiates between jobs which have not run yet, or those which have not run because the workflow was interrupted.
+
+* Major performance issue fixed when submitting a workflow.
+
+* Bug fix: stronger protection of the database from concurrent access:
+
+  The database is responsible for assigning standard output/error files for jobs. It had a bug which may result in the same file name being assigned to different jobs from distinct connections to the database.
+
+* Fix in jobs killing when killed jobs have children processes.
+
+* new config option: MAX_JOB_RUNNING, which can limit the number of running jobs through a given queue, when the DRMS queue has no limitation by itself.
+
+* Fixed a mode (which have probably never completely worked): local scheduler on a remote server (without a real DRMS). This mode is now supported and the number of used CPUs can be setup via config and in the GUI, like in "real" local mode.
+
+* Partial porting to python 3.
+
+  This port is using the "six" python module, which is thus a new dependency of Soma-Workflow.
+
+  Currently the local mode should be working. Client/server mode is not (the main remaining issue being the use of Pyro 3 for communications which does not exist for python 3).
+
+  In the process, python 2.5 support has been dropped. 2.6 and 2.7 are still supported.
+
+
+Version 2.7 (May 2015)
+======================
+
+* Temporary files:
+
+  Temporary files are a special file object (like FileTransfer or SharedResourcePath) which are handled on server side: temporary file names are created during the workflow execution by the server, and are never seen on the client.
+
+* Barrier jobs:
+
+  Barrier jobs are "fake" jobs, which do not actually run on computing resources, but may be used as hubs for dependencies to reduce the number of dependencies between many hihgly connected jobs. See the documentation of the BarrierJob class.
+
+* Groups dependencies:
+
+  Workflow dependencies may use Group elements: a job, or a group, may depend on another job or group. As the engine only manipulates Jobs, groups dependencies are converted internally (using additional barrier jobs) when creating the workflow.
+
+* Automatic start of the Pyro name server when connecting from a client
+
+* Fix: DRMAA used to leave files in $HOME/.drmaa/, more precisely 2 files for each job, which were never deleted. Soma-Workflow now tries to delete them when a job is finished.
+
+
+Version 2.6 (November 2013)
+===========================
+
+* **No more dependency on SIP**:
+
+  SIP wrapping code has been removed. The ctypes module is used for driving the DRMAA library in remote distributed execution.
+
+
+Version 2.5 (May 2013)
+======================
+
+* Replacement of SIP-based wrapping for the C DRMAA library by ctypes wrapping. It removes the need for SIP and a C compiler to benefit from remote distributed execution support using DRMAA.
+
+* Automatically start the database server on remote execution when it is not running anymore.
+
+* **FIX**: segfaults could occur in the GUI, during the periodic polling code when dealing with large workflows.
+
+
+Version 2.4 (March 2013)
+========================
+
+* **MPI scheduler Beta**:
+
+  * run your workflows using an implementation of MPI (Message Passing Interface) (`open-mpi <http://www.open-mpi.org/>`_, `mpich <http://www.mpich.org/>`_...)
+  * monitor the execution as usual in the GUI or using the Python API.
+  * with `MPI4py <https://bitbucket.org/mpi4py/>`_ you can run your workflow on any cluster with pure python code.
+
+* Submit, stop, restart and delete workflows using **command lines**.
+* **Deprecation** of the methods which control jobs apart from workflows:
+
+  * submit_job
+  * delete_job
+  * kill_job
+  * restart_job
+
+* **Fix**: save a workflow from the GUI
+
+
+Version 2.3 (August 2012)
+=========================
+
+* The workflows are saved in the **JSON format** for longer term storage.
+* Access the full range of features of your cluster using **native specification** (see :doc:`Soma-workflow tips <errors_troubleshooting>`)
+* Optimization: **acceleration** of the workflow engine in case of **large workflows** with execution dependencies (more than 2000 jobs).
+* Helpers:
+
+  * Easy **monitoring** of workflow execution using the **Python API**: list_failed_jobs method.
+  * Delete all the workflows at once.
+
+
+Version 2.2 (May 2012)
+======================
+
+* Gui: **Compatibility with PySide** `<http://www.pyside.org>`_ in addition to `PyQt <http://www.riverbankcomputing.co.uk/software/pyqt/intro>`_.
+* More informative error messages.
+
+
+Version 2.1 (March 2012)
+========================
+
+* **Intermediate results can be available more quickly defining job priorities** within workflows (see :doc:`Soma-workflow tips <errors_troubleshooting>`)
+
+* Improvement of the graphical interface (see :doc:`GUI documentation <gui>`):
+
+  * Overview of the **status of all workflows at a glance**.
+  * **Easy pinpoint of jobs** within workflows: job filter by status or name.
+  * Multiple core machine: **the number of employed cpu can be changed at any time** directly from the GUI.
+  * Display of the queue used for each workflow.
+
+* **Optimizations.**
+* **Better error management and stability.**
+* Possible configuration of login for each computing resource.
+* Possibility to change the submission queue when restarting a workflow.
+
+
+Version 2.0 (November 2011)
+===========================
+
+* **Soma-workflow can be used directly on a multiple core machine.**
+* **Soma-workflow is independent of DRMAA** and interaction with other interfaces can be easily implemented.
+* File transfers: New API with several implementations (scp, rsync or a portable implementation).
+* New control feature: **possibility to stop the workflows.**
+* \+ optimizations
+
+
+First release Version 1.0 (July 2011)
+=====================================
